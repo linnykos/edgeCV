@@ -86,7 +86,7 @@ cv.evaluate <- function(A, train.index, holdout.index, K, tol = 1e-6){
     Theta[which(km$cluster==i),i] <- 1
     
   }
-  
+   
   P.hat.holdout <- Theta[(n.train+1):n,]%*%B%*%t(Theta[(n.train+1):n,])
   P.hat.holdout[P.hat.holdout<1e-6] <- 1e-6
   P.hat.holdout[P.hat.holdout>(1-1e-6)] <- 1-1e-6
