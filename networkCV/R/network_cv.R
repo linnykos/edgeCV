@@ -1,19 +1,13 @@
 network_cv_sbm_sample_split <- function(dat, k_vec, test_prop, tol = 1e-6){
   stopifnot(nrow(dat) == ncol(dat), sum(abs(dat - t(dat))) <= tol, test_prop > 0, test_prop < 1,
             k_vec >= 0)
-  n <- nrow(dat)
-  dat_NA <- dat
-  
+
   # generate missing values
-  for(i in 1:ceiling(test_prop * n)){
-    idx <- sample(1:n, 2)
-    dat_NA[idx[1], idx[2]] <- NA
-    dat_NA[idx[2], idx[1]] <- NA
-  }
+  dat_NA <- .remove_entries(dat, test_prop)
   test_idx <- which(is.na(dat_NA))
   
   # generate the error matrix
-  err_mat <- matrix(NA, nrow = sum(is.na(dat_NA)), ncol = k_vec)
+  err_mat <- matrix(NA, nrow = sum(is.na(dat_NA)), ncol = length(k_vec))
   colnames(err_mat) <- k_vec
   
   # impute and compute errors
@@ -28,10 +22,25 @@ network_cv_sbm_sample_split <- function(dat, k_vec, test_prop, tol = 1e-6){
   k <- k_vec[which.min(err_vec)]
   
   # output
-  list(k = k, err_mat = err_mat)
+  list(k = k, err_vec = err_vec, err_mat = err_mat)
 }
 
 ###
+
+.remove_entries <- function(dat, test_prop){
+  n <- nrow(dat)
+  dat_NA <- dat
+  
+  combn_mat <- utils::combn(n, 2)
+  idx <- sample(1:ncol(combn_mat), round(test_prop * ncol(combn_mat)))
+  
+  for(i in 1:length(idx)){
+    dat_NA[combn_mat[1,idx[i]], combn_mat[2,idx[i]]] <- NA
+    dat_NA[combn_mat[2,idx[i]], combn_mat[1,idx[i]]] <- NA
+  }
+  
+  dat_NA
+}
 
 .impute_matrix <- function(dat_NA, K, test_prop){
   test_idx <- which(is.na(dat_NA))
