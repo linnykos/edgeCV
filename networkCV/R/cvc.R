@@ -1,19 +1,21 @@
-cvc_sbm_sample_split <- function(err_mat, trials, alpha){
+cvc_sbm_sample_split <- function(err_mat, trials, alpha, verbose = T){
   stopifnot(length(colnames(err_mat)) == ncol(err_mat))
   
   n <- nrow(err_mat)
+  k <- ncol(err_mat)
   err_mat2 <- .clean_err_mat(err_mat)
   
   mu_vec <- colMeans(err_mat2)
   sd_vec <- apply(err_mat2, 2, sd)
-  test_vec <- .extract_max(sqrt(n)*mu_vec/sd_vec)
+  test_vec <- .extract_max(sqrt(n)*mu_vec/sd_vec, k)
   
   boot_mat <- sapply(1:trials, function(b){
-    .cvc_bootstrap_trial(err_mat2, mu_vec, sd_vec)
+    if(verbose && b %% floor(trials/10) == 0) cat('*')
+    .cvc_bootstrap_trial(err_mat2, mu_vec, sd_vec, k)
   })
   
   p_vec <- sapply(1:k, function(x){
-    length(which(boot_mat[x,] >= test_vec[x]))/ncol(boot_mat)
+    length(which(boot_mat[x,] <= test_vec[x]))/ncol(boot_mat)
   })
   
   model_selected <- colnames(err_mat)[which(p_vec <= alpha)]
@@ -35,17 +37,17 @@ cvc_sbm_sample_split <- function(err_mat, trials, alpha){
   err_mat2
 }
 
-.cvc_bootstrap_trial <- function(err_mat2, mu_vec, sd_vec){
-  n <- nrow(err_mat)
+.cvc_bootstrap_trial <- function(err_mat2, mu_vec, sd_vec, k){
+  n <- nrow(err_mat2)
   g_vec <- stats::rnorm(n)
   tmp <- ((diag(g_vec) %*% err_mat2) - (g_vec %*% t(mu_vec)))/(g_vec %*% t(sd_vec))
-  .extract_max((1/sqrt(n)) * colSums(tmp))
+  .extract_max((1/sqrt(n)) * colSums(tmp), k)
 }
 
 .extract_max <- function(vec, k){
   stopifnot(length(vec) == k * (k-1))
   sapply(1:k, function(x){
-    max[vec[((x-1)*(k+1)+1) : (x*(k-1))]]
+    max(vec[((x-1)*(k-1)+1) : (x*(k-1))])
   })
 }
 
