@@ -107,7 +107,7 @@ test_that("cvc_sbm_sample_split works", {
 test_that("cvc_sbm_sample_split works on a more interesting example", {
   set.seed(10)
   b_mat_truth <- matrix(c(1/4, 1/2, 1/4,  1/2, 1/4, 1/4,  1/4, 1/4, 1/6), 3, 3)
-  cluster_idx_truth <- sample(c(1:3), 150, prob = c(0.3, 0.3, 0.4), replace = T)
+  cluster_idx_truth <- c(rep(1, 45), rep(2, 45), rep(3, 60))
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   k <- 5
   err_mat <- network_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)$err_mat
