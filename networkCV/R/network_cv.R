@@ -1,99 +1,88 @@
-NCV.select <- function(A, max.K, cv = 3, verbose = T){
-  # initialize
-  dc.avg.se <- dc.avg.log <- avg.se <- avg.log <- rep(0,max.K)
-  dc.avg.se[1] <- dc.avg.log[1] <- avg.se[1] <- avg.log[1] <- Inf
-  dc.dev.mat <- dc.l2.mat <- sbm.dev.mat <- sbm.l2.mat <- matrix(0,cv,max.K)
-  n <- nrow(A)
-  sample.index <- sample.int(n)
-  max.fold.num <- ceiling(n/cv)
-  fold.index <- rep(1:cv,each=max.fold.num)[1:n]
+network_cv_sbm_sample_split <- function(dat, k_vec, test_prop, tol = 1e-6){
+  stopifnot(nrow(dat) == ncol(dat), sum(abs(dat - t(dat))) <= tol, test_prop > 0, test_prop < 1,
+            k_vec >= 0)
+  n <- nrow(dat)
+  dat_NA <- dat
   
-  # start trying each value of K
-  cv.index <- fold.index[sample.index]
-  for(KK in 1:max.K){
-    dc.l2 <- l2 <- dc.log.like <- log.like <- rep(0,cv)
-    if(verbose) print(paste("Start",KK))
-    
-    for(k in 1:cv){
-      holdout.index <- which(cv.index==k)
-      train.index <- which(cv.index!=k)
-      tmp.eval <- cv.evaluate(A,train.index,holdout.index,KK)
-      
-      log.like[k] <- tmp.eval$loglike
-      
-      sbm.l2.mat[k,KK] <- l2[k] <- tmp.eval$l2
-      sbm.dev.mat[k,KK] <- log.like[k] <- tmp.eval$loglike
-    }
-    
-    avg.se[KK] <- mean(l2)
-    avg.log[KK] <- mean(log.like)
-    
-    if(verbose) print(paste("Finish ",KK,"....",sep=""))
+  # generate missing values
+  for(i in 1:ceiling(test_prop * n)){
+    idx <- sample(1:n, 2)
+    dat_NA[idx[1], idx[2]] <- NA
+    dat_NA[idx[2], idx[1]] <- NA
+  }
+  test_idx <- which(is.na(dat_NA))
+  
+  # generate the error matrix
+  err_mat <- matrix(NA, nrow = sum(is.na(dat_NA)), ncol = k_vec)
+  colnames(err_mat) <- k_vec
+  
+  # impute and compute errors
+  for(i in k_vec){
+    dat_impute <- .impute_matrix(dat_NA, k_vec[i], test_prop)
+    dat_impute <- .sbm_projection(dat_impute, k_vec[i])
+    err_mat[,i] <- (dat_impute[test_idx] - dat[test_idx])^2
   }
   
-  # select for DCSBM and SBM, either based on minimizing average log-likelihood or average std
-  dev.model <- paste("SBM",which.min(avg.log),sep="-")
-  l2.model <- paste("SBM",which.min(avg.se),sep="-")
+  # compute the best model
+  err_vec <- colMeans(err_mat)
+  k <- k_vec[which.min(err_vec)]
   
-  list(dev = avg.log, l2 = avg.se, sbm.l2.mat = sbm.l2.mat,
-       sbm.dev.mat = sbm.dev.mat, l2.model = l2.model, dev.model = dev.model)
+  # output
+  list(k = k, err_mat = err_mat)
 }
 
-cv.evaluate <- function(A, train.index, holdout.index, K, tol = 1e-6){
-  n <- nrow(A)
-  A.new <- A[c(train.index,holdout.index),c(train.index,holdout.index)]
-  n.holdout <- length(holdout.index)
-  n.train <- n-n.holdout
-  A1 <- A.new[1:n.train,]
-  A1.svd <- irlba::irlba(A1+0.001,nu=K,nv=K)
-  
-  if(K==1){
-    A0 <- A1[1:n.train,1:n.train]
-    pb <- sum(A0)/n.train^2
-    if(pb < tol) pb <- tol
-    if(pb > 1- tol) pb <- 1-tol
-    A.2 <- A.new[(n.train+1):n,(n.train+1):n]
-    sum.index <- lower.tri(A.2)
-    loglike <- -sum(A.2[sum.index]*log(pb)) - sum((1-A.2[sum.index])*log(1-pb))
-    l2 <- sum((A.2[sum.index]-pb)^2)
-    return(list(loglike=loglike,l2=l2))
-  }
-  
-  V <- A1.svd$v
-  km <- kmeans(V,centers=K,nstart=30,iter.max=30)
-  
-  degrees <- colSums(A1)
-  no.edge <- sum(degrees==0)
-  
+###
 
-  B <- matrix(0,K,K)
-  for(i in 1:(K-1)){
-    for(j in (i+1):K){
-      N.1i <- intersect(1:n.train,which(km$cluster==i))
-      N.2i <- intersect((n.train+1):n,which(km$cluster==i))
-      N.1j <- intersect(1:n.train,which(km$cluster==j))
-      N.2j <- intersect((n.train+1):n,which(km$cluster==j))
-      B[i,j] <- (sum(A.new[N.1i,N.1j]) + sum(A.new[N.1i,N.2j]) + sum(A.new[N.1j,N.2i])+1)/(length(N.1i)*length(N.1j)+length(N.1j)*length(N.2i)+length(N.1i)*length(N.2j)+1)
-    }
-  }
-  B <- B+t(B)
+.impute_matrix <- function(dat_NA, K, test_prop){
+  test_idx <- which(is.na(dat_NA))
+  dat_tmp <- dat_NA
+  if(length(test_idx) > 0) dat_tmp[test_idx] <- 0
+  eigen_res <- mgcv::slanczos(dat_tmp/(1-test_prop), K)
   
-  Theta <- matrix(0,n,K)
+  if(K == 1){
+    diag_mat <- matrix(eigen_res$values, 1, 1)
+  } else {
+    diag_mat <- diag(eigen_res$values)
+  }
+  
+  eigen_res$vectors %*% diag_mat %*% t(eigen_res$vectors)
+}
+
+.spectral_clustering <- function(dat_impute, K){
+  eigenvectors <- mgcv::slanczos(dat_impute, K)$vectors
+  
+  stats::kmeans(eigenvectors, centers=K, nstart=20)$cluster
+}
+
+.form_prediction_sbm <- function(dat_impute, cluster_idx){
+  diag(dat_impute) <- 0
+  K <- max(cluster_idx)
+  
+  b_mat <- matrix(NA, K, K)
   for(i in 1:K){
-    N.1i <- intersect(1:n.train,which(km$cluster==i))
-    N.2i <- intersect((n.train+1):n,which(km$cluster==i))
-    B[i,i] <- (sum(A.new[N.1i,N.1i])/2 + sum(A.new[N.1i,N.2i])+1)/(length(N.1i)*(length(N.1i)-1)/2+length(N.1i)*length(N.2i)+1)
-    Theta[which(km$cluster==i),i] <- 1
-    
+    for(j in 1:i){
+      idx_i <- which(cluster_idx == i)
+      
+      if(i != j){
+        idx_j <- which(cluster_idx == j)
+        b_mat[i,j] <- mean(dat_impute[idx_i, idx_j])
+        b_mat[j,i] <- b_mat[i,j]
+        
+      } else {
+        b_mat[i,i] <- sum(dat_impute[idx_i, idx_i])/(2*choose(length(idx_i), 2))
+      }
+    }
   }
-   
-  P.hat.holdout <- Theta[(n.train+1):n,]%*%B%*%t(Theta[(n.train+1):n,])
-  P.hat.holdout[P.hat.holdout<1e-6] <- 1e-6
-  P.hat.holdout[P.hat.holdout>(1-1e-6)] <- 1-1e-6
-  A.2 <- A.new[(n.train+1):n,(n.train+1):n]
-  sum.index <- lower.tri(A.2)
-  loglike <- -sum(A.2[sum.index]*log(P.hat.holdout[sum.index])) - sum((1-A.2[sum.index])*log(1-P.hat.holdout[sum.index]))
   
-  l2 <- sum((A.2[sum.index]-P.hat.holdout[sum.index])^2)
-  return(list(loglike=loglike,l2=l2))
+  b_mat
 }
+
+.sbm_projection <- function(dat_impute, K){
+  cluster_idx <- .spectral_clustering(dat_impute, K)
+  b_mat <- .form_prediction_sbm(dat_impute, cluster_idx)
+  
+  sapply(1:ncol(dat_impute), function(x){
+    b_mat[cluster_idx[x], cluster_idx]
+  })
+}
+
