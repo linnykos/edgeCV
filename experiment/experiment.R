@@ -1,53 +1,44 @@
 rm(list=ls())
 set.seed(10)
-b_mat_truth <- 0.5*diag(3)
-b_mat_truth <- b_mat_truth + 0.2
+b_mat_truth <- diag(3)
 cluster_idx_truth <- rep(1:3, each = 50)
 dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
-
-k_vec = c(1:5)
-nfold = 5
-tol = 1e-6
+k <- 5
+err_mat_list <- edge_cv_sbm(dat, k_vec = c(1:k), nfold = 5, verbose = F)$err_mat_list
+trials <- 100
+alpha <- 0.05
 verbose = T
 
-stopifnot(nrow(dat) == ncol(dat), sum(abs(dat - t(dat))) <= tol, 
-          k_vec >= 0)
-
-# assign each node pair to a fold
-n <- nrow(dat)
-combn_mat <- utils::combn(n, 2)
-idx_mat <- apply(combn_mat, 2, function(vec){
-  c(.convert_pair_to_idx(vec, n), .convert_pair_to_idx(rev(vec), n))
-})
-fold_id <- rep(NA, ncol(idx_mat))
-for(i in 1:(nfold-1)){
-  fold_id[sample(which(is.na(fold_id)), round(ncol(idx_mat)/nfold))] <- i
+for(i in 1:length(err_mat_list)){
+  stopifnot(length(colnames(err_mat_list[[i]])) == ncol(err_mat_list[[i]]))
 }
-fold_id[which(is.na(fold_id))] <- nfold
 
-err_mat_list <- lapply(1:nfold, function(fold){
-  if(verbose) print(paste0("On fold ", fold))
-  
-  test_idx <- as.numeric(idx_mat[,which(fold_id == fold)])
-  dat_NA <- dat
-  dat_NA[test_idx] <- NA
-  
-  # generate the error matrix
-  err_mat <- matrix(NA, nrow = sum(is.na(dat_NA)), ncol = length(k_vec))
-  colnames(err_mat) <- k_vec
-  
-  # impute and compute errors
-  for(i in k_vec){
-    dat_impute <- .impute_matrix(dat_NA, k_vec[i], 1/nfold)
-    dat_impute <- .sbm_projection(dat_impute, k_vec[i])
-    err_mat[,i] <- (dat_impute[test_idx] - dat[test_idx])^2
-  }
-  
-  err_mat
+n_vec <- sapply(err_mat_list, function(err_mat){nrow(err_mat)})
+k_vec <- sapply(err_mat_list, function(err_mat){ncol(err_mat)})
+stopifnot(length(unique(k_vec)) == 1)
+k <- unique(k_vec)
+n <- sum(sapply(err_mat_list, nrow))
+
+err_mat_list2 <- lapply(err_mat_list, function(err_mat){
+  .clean_err_mat(err_mat)
 })
 
-err_mat <- do.call(rbind, err_mat_list)
+mu_vec_list <- lapply(err_mat_list2, function(err_mat2){colMeans(err_mat2)})
 
-# compute the best model
-err_vec <- colMeans(err_mat)
-k <- k_vec[which.min(err_vec)]
+err_mat_list2_recentered <- .recenter_list(err_mat_list2, mu_vec_list)
+
+mu_vec <- colMeans(do.call(rbind, mu_vec_list))
+sd_vec <- apply(do.call(rbind, err_mat_list2_recentered), 2, stats::sd)
+
+test_vec <- .extract_max(sqrt(n)*mu_vec/sd_vec, k)
+
+boot_mat <- sapply(1:trials, function(b){
+  if(verbose && b %% floor(trials/10) == 0) cat('*')
+  
+  tmp_mat <- .cvc_bootstrap_trial_cv(err_mat_list2, mu_vec_list, sd_vec)
+  .extract_max((1/sqrt(n)) * colSums(tmp_mat), k)
+})
+
+p_vec <- sapply(1:k, function(x){
+  length(which(boot_mat[x,] <= test_vec[x]))/ncol(boot_mat)
+})

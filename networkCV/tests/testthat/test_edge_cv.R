@@ -152,6 +152,38 @@ test_that(".form_prediction_sbm works reasonable well", {
   expect_true(sum(abs(res - b_mat)) <= sum(abs(res2 - b_mat)))
 })
 
+##################
+
+## .recenter_list is correct
+
+test_that(".recenter_list works", {
+  mat_list <- lapply(1:3, function(i){i*matrix(1:30,6,5)})
+  vec_list <- lapply(1:3, function(i){i*c(1:5)})
+  
+  res <- .recenter_list(mat_list, vec_list)
+  
+  expect_true(length(res) == length(mat_list))
+  for(i in 1:length(res)){
+    expect_true(all(dim(res[[i]]) == dim(mat_list[[i]])))
+  }
+})
+
+test_that(".recenter_list is correct", {
+  mat_list <- lapply(1:3, function(i){matrix(rnorm(35),7,5)})
+  vec_list <- lapply(1:3, function(i){rnorm(5)})
+  
+  res <- .recenter_list(mat_list, vec_list)
+  res2 <- lapply(1:3, function(i){
+    tmp <- mat_list[[i]]
+    for(j in 1:nrow(tmp)){
+      tmp[j,] <- tmp[j,] - vec_list[[i]]
+    }
+    tmp
+  })
+  
+  expect_true(sum(abs(do.call(rbind, res) - do.call(rbind, res2))) <= 1e-6)
+})
+
 ################
 
 ## .sbm_projection is correct
@@ -234,4 +266,8 @@ test_that("edge_cv_sbm works", {
   expect_true(length(res$err_vec) == 5)
   expect_true(ncol(res$err_mat_list[[1]]) == length(res$err_vec))
 })
+
+#######
+
+
 

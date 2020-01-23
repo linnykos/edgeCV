@@ -156,3 +156,20 @@ test_that("cvc_sbm_sample_split works with negative eigenvalues", {
   expect_true(all(is.character(res$model_selected)))
   expect_true(length(res$p_vec) == 5)
 })
+
+#############################
+
+## cvc_sbm is correct
+
+test_that("cvc_sbm works", {
+  set.seed(10)
+  b_mat_truth <- matrix(c(1/4, 1/2, 1/4,  1/2, 1/4, 1/4,  1/4, 1/4, 1/6), 3, 3)
+  cluster_idx_truth <- c(rep(1, 45), rep(2, 45), rep(3, 60))
+  dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
+  k <- 5
+  err_mat_list <- edge_cv_sbm(dat, k_vec = c(1:k), nfold = 5, verbose = F)$err_mat_list
+  trials <- 100
+  alpha <- 0.05
+  
+  res <- cvc_sbm(err_mat_list, trials, alpha)
+})

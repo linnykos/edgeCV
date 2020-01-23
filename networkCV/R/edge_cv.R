@@ -69,7 +69,7 @@ edge_cv_sbm <- function(dat, k_vec, nfold = 5, tol = 1e-6, verbose = T){
   k <- k_vec[which.min(err_vec)]
   
   # output
-  list(k = k, err_vec = err_vec, err_mat = err_mat_list)
+  list(k = k, err_vec = err_vec, err_mat_list = err_mat_list)
 }
 
 ###
