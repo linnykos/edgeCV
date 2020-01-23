@@ -1,29 +1,53 @@
 rm(list=ls())
-
 set.seed(10)
-b_mat_truth <- matrix(c(1/4, 1/2, 1/4,  1/2, 1/4, 1/4,  1/4, 1/4, 1/6), 3, 3)
-cluster_idx_truth <- sample(c(1:3), 150, prob = c(0.3, 0.3, 0.4), replace = T)
+b_mat_truth <- 0.5*diag(3)
+b_mat_truth <- b_mat_truth + 0.2
+cluster_idx_truth <- rep(1:3, each = 50)
 dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
-k <- 5
-ncv_res <- network_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)
-err_mat <- ncv_res$err_mat
-trials <- 100
-alpha <- 0.05
+
+k_vec = c(1:5)
+nfold = 5
+tol = 1e-6
 verbose = T
 
-############
+stopifnot(nrow(dat) == ncol(dat), sum(abs(dat - t(dat))) <= tol, 
+          k_vec >= 0)
 
-stopifnot(length(colnames(err_mat)) == ncol(err_mat))
-
-n <- nrow(err_mat)
-k <- ncol(err_mat)
-err_mat2 <- .clean_err_mat(err_mat)
-
-mu_vec <- colMeans(err_mat2)
-sd_vec <- apply(err_mat2, 2, sd)
-test_vec <- .extract_max(sqrt(n)*mu_vec/sd_vec, k)
-
-boot_mat <- sapply(1:trials, function(b){
-  if(verbose && b %% floor(trials/10) == 0) cat('*')
-  .cvc_bootstrap_trial(err_mat2, mu_vec, sd_vec, k)
+# assign each node pair to a fold
+n <- nrow(dat)
+combn_mat <- utils::combn(n, 2)
+idx_mat <- apply(combn_mat, 2, function(vec){
+  c(.convert_pair_to_idx(vec, n), .convert_pair_to_idx(rev(vec), n))
 })
+fold_id <- rep(NA, ncol(idx_mat))
+for(i in 1:(nfold-1)){
+  fold_id[sample(which(is.na(fold_id)), round(ncol(idx_mat)/nfold))] <- i
+}
+fold_id[which(is.na(fold_id))] <- nfold
+
+err_mat_list <- lapply(1:nfold, function(fold){
+  if(verbose) print(paste0("On fold ", fold))
+  
+  test_idx <- as.numeric(idx_mat[,which(fold_id == fold)])
+  dat_NA <- dat
+  dat_NA[test_idx] <- NA
+  
+  # generate the error matrix
+  err_mat <- matrix(NA, nrow = sum(is.na(dat_NA)), ncol = length(k_vec))
+  colnames(err_mat) <- k_vec
+  
+  # impute and compute errors
+  for(i in k_vec){
+    dat_impute <- .impute_matrix(dat_NA, k_vec[i], 1/nfold)
+    dat_impute <- .sbm_projection(dat_impute, k_vec[i])
+    err_mat[,i] <- (dat_impute[test_idx] - dat[test_idx])^2
+  }
+  
+  err_mat
+})
+
+err_mat <- do.call(rbind, err_mat_list)
+
+# compute the best model
+err_vec <- colMeans(err_mat)
+k <- k_vec[which.min(err_vec)]

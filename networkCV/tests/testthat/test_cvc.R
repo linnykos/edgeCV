@@ -8,12 +8,12 @@ test_that(".clean_err_mat works", {
   b_mat_truth <- b_mat_truth + 0.2
   cluster_idx_truth <- rep(1:3, each = 50)
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
-  ncv_output <- network_cv_sbm_sample_split(dat, k_vec = c(1:5), test_prop = 0.1)
+  ecv_output <- edge_cv_sbm_sample_split(dat, k_vec = c(1:5), test_prop = 0.1)
   
-  res <- .clean_err_mat(ncv_output$err_mat)
+  res <- .clean_err_mat(ecv_output$err_mat)
   
-  expect_true(nrow(res) == nrow(ncv_output$err_mat))
-  k <- ncol(ncv_output$err_mat)
+  expect_true(nrow(res) == nrow(ecv_output$err_mat))
+  k <- ncol(ecv_output$err_mat)
   expect_true(ncol(res) == k*(k-1))
 })
 
@@ -42,9 +42,9 @@ test_that(".cvc_bootstrap_trial works", {
   cluster_idx_truth <- rep(1:3, each = 50)
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   k <- 5
-  ncv_output <- network_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)
+  ecv_output <- edge_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)
   
-  err_mat2 <- .clean_err_mat(ncv_output$err_mat)
+  err_mat2 <- .clean_err_mat(ecv_output$err_mat)
   
   mu_vec <- colMeans(err_mat2)
   sd_vec <- apply(err_mat2, 2, sd)
@@ -61,9 +61,9 @@ test_that(".cvc_bootstrap_trial makes the correct calculation", {
   cluster_idx_truth <- rep(1:3, each = 50)
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   k <- 5
-  ncv_output <- network_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)
+  ecv_output <- edge_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)
   
-  err_mat2 <- .clean_err_mat(ncv_output$err_mat)
+  err_mat2 <- .clean_err_mat(ecv_output$err_mat)
   
   mu_vec <- colMeans(err_mat2)
   sd_vec <- apply(err_mat2, 2, sd)
@@ -93,7 +93,7 @@ test_that("cvc_sbm_sample_split works", {
   cluster_idx_truth <- rep(1:3, each = 50)
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   k <- 5
-  err_mat <- network_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)$err_mat
+  err_mat <- edge_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)$err_mat
   trials <- 100
   alpha <- 0.05
   
@@ -111,7 +111,7 @@ test_that("cvc_sbm_sample_split works on a slightly more interesting example", {
   cluster_idx_truth <- c(rep(1, 45), rep(2, 45), rep(3, 60))
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   k <- 5
-  err_mat <- network_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)$err_mat
+  err_mat <- edge_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)$err_mat
   trials <- 100
   alpha <- 0.05
   
@@ -128,8 +128,8 @@ test_that("cvc_sbm_sample_split works when the difference between ranks is small
   cluster_idx_truth <- c(rep(1, 45), rep(2, 45), rep(3, 60))
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   k <- 5
-  ncv_res <- network_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)
-  err_mat <- ncv_res$err_mat
+  ecv_res <- edge_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)
+  err_mat <- ecv_res$err_mat
   trials <- 200
   alpha <- 0.05
   
@@ -146,7 +146,7 @@ test_that("cvc_sbm_sample_split works with negative eigenvalues", {
   cluster_idx_truth <- c(rep(1, 45), rep(2, 45), rep(3, 60))
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   k <- 5
-  err_mat <- network_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)$err_mat
+  err_mat <- edge_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)$err_mat
   trials <- 100
   alpha <- 0.05
   

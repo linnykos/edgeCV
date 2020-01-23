@@ -1,4 +1,4 @@
-context("Test network cv")
+context("Test edge cv")
 
 ## .remove_entries is correct
 
@@ -197,16 +197,16 @@ test_that(".sbm_projection works reasonably well", {
 
 ######################
 
-## network_cv_sbm_sample_split is correct
+## edge_cv_sbm_sample_split is correct
 
-test_that("network_cv_sbm_sample_split works", {
+test_that("edge_cv_sbm_sample_split works", {
   set.seed(10)
   b_mat_truth <- 0.5*diag(3)
   b_mat_truth <- b_mat_truth + 0.2
   cluster_idx_truth <- rep(1:3, each = 50)
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   
-  res <- network_cv_sbm_sample_split(dat, k_vec = c(1:5), test_prop = 0.1)
+  res <- edge_cv_sbm_sample_split(dat, k_vec = c(1:5), test_prop = 0.1)
   
   expect_true(is.list(res))
   expect_true(length(res) == 3)
@@ -214,3 +214,24 @@ test_that("network_cv_sbm_sample_split works", {
   expect_true(length(res$err_vec) == 5)
   expect_true(ncol(res$err_mat) == length(res$err_vec))
 })
+
+################
+
+## edge_cv_sbm is correct
+
+test_that("edge_cv_sbm works", {
+  set.seed(10)
+  b_mat_truth <- 0.5*diag(3)
+  b_mat_truth <- b_mat_truth + 0.2
+  cluster_idx_truth <- rep(1:3, each = 50)
+  dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
+  
+  res <- edge_cv_sbm(dat, k_vec = c(1:5), nfold = 5, verbose = F)
+  
+  expect_true(is.list(res))
+  expect_true(length(res) == 3)
+  expect_true(all(sort(names(res)) == sort(c("k", "err_vec", "err_mat_list"))))
+  expect_true(length(res$err_vec) == 5)
+  expect_true(ncol(res$err_mat_list[[1]]) == length(res$err_vec))
+})
+

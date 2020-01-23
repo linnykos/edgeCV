@@ -1,9 +1,10 @@
-generate_sbm <- function(b_mat, cluster_idx){
-  stopifnot(max(cluster_idx) == nrow(b_mat), sum(abs(b_mat - t(b_mat))) <= 1e-6)
+generate_sbm <- function(b_mat, cluster_idx, rho = 1){
+  stopifnot(max(cluster_idx) == nrow(b_mat), sum(abs(b_mat - t(b_mat))) <= 1e-6,
+            rho >= 0, rho <= 1)
   
   n <- length(cluster_idx)
   cluster_mat <- .convert_idx_to_mat(cluster_idx)
-  pop_mat <- cluster_mat %*% b_mat %*% t(cluster_mat)
+  pop_mat <- rho*(cluster_mat %*% b_mat %*% t(cluster_mat))
   
   adj_mat <- matrix(0, n, n)
   lower_tri_idx <- which(lower.tri(adj_mat, diag = F))
