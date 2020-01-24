@@ -39,6 +39,7 @@ cvc_sbm <- function(err_mat_list, trials, alpha, verbose = T, ncores = NA){
   func <- function(b){
     if(verbose && b %% floor(trials/10) == 0) cat('*')
     
+    set.seed(sum(sd_vec)*100+10*b)
     tmp_mat <- .cvc_bootstrap_trial_cv(err_mat_list2, mu_vec_list, sd_vec)
     .extract_max((1/sqrt(n)) * colSums(tmp_mat), k)
   }
@@ -46,11 +47,14 @@ cvc_sbm <- function(err_mat_list, trials, alpha, verbose = T, ncores = NA){
   if(!is.na(ncores)){
     b <- 0 #debugging purposes
     boot_mat <- foreach::"%dopar%"(foreach::foreach(b = 1:trials), func(b))
-    boot_mat <- do.call(rbind, boot_mat)
+    
+    if(verbose) print("Done bootstrapping")
+    boot_mat <- do.call(cbind, boot_mat)
   } else {
     boot_mat <- sapply(1:trials, func)
   }
   
+  if(verbose) print("Computing p-values")
   # compute p-value
   p_vec <- sapply(1:k, function(x){
     length(which(boot_mat[x,] <= test_vec[x]))/ncol(boot_mat)
@@ -87,6 +91,7 @@ cvc_sbm_sample_split <- function(err_mat, trials, alpha, verbose = T, ncores = N
   func <- function(b){
     if(verbose && b %% floor(trials/10) == 0) cat('*')
     
+    set.seed(sum(sd_vec)*100+10*b)
     tmp_mat <- .cvc_bootstrap_trial(err_mat2, mu_vec, sd_vec)
     .extract_max((1/sqrt(n)) * colSums(tmp_mat), k)
   }
@@ -94,7 +99,7 @@ cvc_sbm_sample_split <- function(err_mat, trials, alpha, verbose = T, ncores = N
   if(!is.na(ncores)){
     b <- 0 #debugging purposes
     boot_mat <- foreach::"%dopar%"(foreach::foreach(b = 1:trials), func(b))
-    boot_mat <- do.call(rbind, boot_mat)
+    boot_mat <- do.call(cbind, boot_mat)
   } else {
     boot_mat <- sapply(1:trials, func)
   }

@@ -1,6 +1,6 @@
 rm(list=ls())
 library(simulation)
-#library(networkCV)
+library(networkCV)
 
 set.seed(10)
 ncores <- NA
@@ -23,22 +23,22 @@ rule <- function(vec){
   } else {
     rho <- log(n)/n
   }
-  dat <- generate_sbm(b_mat, cluster_idx, rho)
+  dat <- networkCV::generate_sbm(b_mat, cluster_idx, rho)
   
   dat
 }
 
 criterion <- function(dat, vec, y){
-  ecv_res <- edge_cv_sbm(dat, k_vec = c(1:vec["K"]), nfold = vec["nfold"], verbose = F)
+  ecv_res <- networkCV::edge_cv_sbm(dat, k_vec = c(1:vec["K"]), nfold = vec["nfold"], verbose = F)
   err_mat_list <- ecv_res$err_mat_list
   
-  cvc_res <- cvc_sbm(err_mat_list, vec["trials"], vec["alpha"], verbose = F)
+  cvc_res <- networkCV::cvc_sbm(err_mat_list, vec["trials"], vec["alpha"], verbose = F, ncores = 20)
   
   list(err_vec = ecv_res$err_vec, p_vec = cvc_res$p_vec)
 }
 
 # idx <- 1; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
-# idx <- 2; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
+# idx <- 4; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
 
 
 ###########################
