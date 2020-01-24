@@ -109,9 +109,28 @@ edge_cv_sbm <- function(dat, k_vec, nfold = 5, tol = 1e-6, verbose = T){
 }
 
 .spectral_clustering <- function(dat_impute, K){
-  eigenvectors <- mgcv::slanczos(dat_impute, K)$vectors
+  eigenvectors <- .extract_eigenvectors(dat_impute, K)
   
   stats::kmeans(eigenvectors, centers=K, nstart=20)$cluster
+}
+
+# note: for stability reasons, always ask for 1 more eigenvector than needed
+.extract_eigenvectors <- function(dat_impute, K){
+  eigen_res <- mgcv::slanczos(dat_impute, K+1)
+  idx <- order(abs(eigen_res$values), decreasing = T)[1:K]
+  eigen_res$vectors <- eigen_res$vectors[,idx,drop = F]
+  eigen_res$values <- eigen_res$values[idx]
+  
+  sign_vec <- sign(eigen_res$values)
+  eigen_val <- abs(eigen_res$values)
+  
+  if(length(eigen_val) == 1) {
+    diag_mat <- matrix(sign_vec[1] * sqrt(eigen_val), 1, 1)
+  } else {
+    diag_mat <- diag(sqrt(eigen_val)) %*% diag(sign_vec)
+  }
+
+  eigen_res$vectors %*% diag_mat
 }
 
 .form_prediction_sbm <- function(dat_impute, cluster_idx){

@@ -109,6 +109,44 @@ test_that(".spectral_clustering can give correct answer", {
   expect_true(length(unique(res)) == 3)
 })
 
+test_that(".spectral_clustering works in rank deficient cases", {
+  set.seed(10)
+  b_mat <- matrix(c(1/2, 1/4, 1/4, 1/8), 2, 2)
+  cluster_idx <- rep(1:2, each = 50)
+  dat <- generate_sbm(b_mat, cluster_idx)
+  
+  res <- .spectral_clustering(dat, ncol(b_mat))
+  
+  expect_true(length(res) == ncol(dat))
+  expect_true(all(res %% 1 == 0))
+  expect_true(all(res >= 1))
+  expect_true(all(res <= ncol(b_mat)))
+})
+
+#######################
+
+## .extract_eigenvectors is correct
+
+test_that(".extract_eigenvectors is calculating weighted eigenvectors correctly", {
+  set.seed(10)
+  b_mat <- matrix(c(1/2, 1/4, 1/4, 1/8), 2, 2)
+  K <- ncol(b_mat)
+  cluster_idx <- rep(1:2, each = 50)
+  dat <- generate_sbm(b_mat, cluster_idx)
+  
+  res <- .extract_eigenvectors(dat, K)
+  
+  eigen_res <- eigen(dat)
+  eigen_val <- eigen_res$values
+  idx <- order(abs(eigen_val), decreasing = T)[1:K]
+  stopifnot(eigen_res$values[idx[1]] > 0)
+  stopifnot(eigen_res$values[idx[2]] < 0)
+  
+  res2 <- eigen_res$vectors[,idx] %*% diag(c(sqrt(eigen_val[idx[1]]), -sqrt(abs(eigen_val[idx[2]]))))
+  
+  stopifnot(sum(abs(res - res2)) <= 1e-6)
+})
+
 #####################
 
 ## .form_prediction_sbm works

@@ -3,13 +3,13 @@ library(simulation)
 #library(networkCV)
 
 set.seed(10)
-ncores <- 1
+ncores <- NA
 doMC::registerDoMC(cores = ncores)
 
 trials <- 50
-paramMat <- as.matrix(expand.grid(round(exp(seq(log(15), log(150), length.out = 10))), c(0, 0.25, 0.5, -1),
-                                  5, 200, 0.05, 0.1))
-colnames(paramMat) <- c("n", "rho", "K", "trials", "alpha", "test_prop")
+paramMat <- as.matrix(expand.grid(c(30, 100, 300, 1000), c(0, 0.25, 0.5),
+                                  5, 200, 0.05, 5))
+colnames(paramMat) <- c("n", "rho", "K", "trials", "alpha", "nfold")
 
 #############
 
@@ -29,19 +29,16 @@ rule <- function(vec){
 }
 
 criterion <- function(dat, vec, y){
-  ecv_res <- edge_cv_sbm_sample_split(dat, k_vec = c(1:vec["K"]), test_prop = vec["test_prop"])
-  err_mat <- ecv_res$err_mat
+  ecv_res <- edge_cv_sbm(dat, k_vec = c(1:vec["K"]), nfold = vec["nfold"], verbose = F)
+  err_mat_list <- ecv_res$err_mat_list
   
-  cvc_res <- cvc_sbm_sample_split(err_mat, vec["trials"], vec["alpha"], verbose = F)
+  cvc_res <- cvc_sbm(err_mat_list, vec["trials"], vec["alpha"], verbose = F)
   
   list(err_vec = ecv_res$err_vec, p_vec = cvc_res$p_vec)
 }
 
 # idx <- 1; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
-# idx <- 10; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
-# idx <- 20; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
-# idx <- 30; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
-# idx <- 40; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
+# idx <- 2; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
 
 
 ###########################
@@ -49,6 +46,6 @@ criterion <- function(dat, vec, y){
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = trials,
                                         cores = ncores, as_list = T,
-                                        filepath = "sparsity_tmp.RData",
+                                        filepath = "sparsity_2_tmp.RData",
                                         verbose = T)
-save.image("sparsity.RData")
+save.image("sparsity_2.RData")
