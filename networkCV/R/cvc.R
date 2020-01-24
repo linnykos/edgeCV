@@ -44,6 +44,7 @@ cvc_sbm <- function(err_mat_list, trials, alpha, verbose = T, ncores = NA){
   }
   
   if(!is.na(ncores)){
+    b <- 0 #debugging purposes
     boot_mat <- foreach::"%dopar%"(foreach::foreach(b = 1:trials), func(b))
     boot_mat <- do.call(rbind, boot_mat)
   } else {
@@ -91,6 +92,7 @@ cvc_sbm_sample_split <- function(err_mat, trials, alpha, verbose = T, ncores = N
   }
   
   if(!is.na(ncores)){
+    b <- 0 #debugging purposes
     boot_mat <- foreach::"%dopar%"(foreach::foreach(b = 1:trials), func(b))
     boot_mat <- do.call(rbind, boot_mat)
   } else {

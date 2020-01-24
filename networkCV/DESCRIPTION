@@ -1,8 +1,8 @@
-Package: nameHere
-Title: Name Here
+Package: networkCV
+Title: Edge CV experiments
 Version: 1.0.0.0000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: Something something something
+Authors@R: person("Kevin", "Lin", email = "klin1234@gmail.com", role = c("aut", "cre"))
+Description: Code for discussion of Edge CV. This packages uses CVC as well as tensorization.
 Depends:
     R (>= 3.3.0)
 License: MIT +file LICENSE
@@ -15,4 +15,4 @@ Imports:
     doMC
 Suggests:
     testthat
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
