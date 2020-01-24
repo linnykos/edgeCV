@@ -254,7 +254,7 @@ test_that(".sbm_projection works reasonably well", {
   
   b_mat_truth2 <- matrix(0.7, 3, 3)
   b_mat_truth2 <- b_mat_truth2 - 0.5*diag(3)
-  dat2 <- generate_sbm(b_mat_truth2, cluster_idx)
+  dat2 <- generate_sbm(b_mat_truth2, cluster_idx_truth)
   dat_NA2 <- .remove_entries(dat2, test_prop)
   dat_impute2 <- .impute_matrix(dat_NA2, ncol(b_mat_truth2), test_prop)
   res2 <- .sbm_projection(dat_impute2, ncol(b_mat_truth2))

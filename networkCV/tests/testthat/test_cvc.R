@@ -49,7 +49,7 @@ test_that(".cvc_bootstrap_trial works", {
   mu_vec <- colMeans(err_mat2)
   sd_vec <- apply(err_mat2, 2, sd)
   
-  res <- .cvc_bootstrap_trial(err_mat2, mu_vec, sd_vec, k)
+  res <- .cvc_bootstrap_trial(err_mat2, mu_vec, sd_vec)
   
   expect_true(all(dim(res) == dim(err_mat2)))
 })
@@ -69,7 +69,7 @@ test_that(".cvc_bootstrap_trial makes the correct calculation", {
   sd_vec <- apply(err_mat2, 2, sd)
   
   set.seed(10)
-  res <- .cvc_bootstrap_trial(err_mat2, mu_vec, sd_vec, k)
+  res <- .cvc_bootstrap_trial(err_mat2, mu_vec, sd_vec)
   
   set.seed(10)
   g_vec <- stats::rnorm(nrow(err_mat2))
