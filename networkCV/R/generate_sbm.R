@@ -1,3 +1,12 @@
+#' Generate SBM
+#'
+#' @param b_mat connectivity matrix (symmetric), all values between \code{0} and \code{1} 
+#' @param cluster_idx vector of length equal to number of nodes, where each node is 
+#' assigned to a positive integer from \code{1} to \code{max(cluster_idx)}
+#' @param rho sparsity index, between \code{0} and \code{1} 
+#'
+#' @return symmetric \code{0}-\code{1} matrix
+#' @export
 generate_sbm <- function(b_mat, cluster_idx, rho = 1){
   stopifnot(max(cluster_idx) == nrow(b_mat), sum(abs(b_mat - t(b_mat))) <= 1e-6,
             rho >= 0, rho <= 1)

@@ -1,3 +1,13 @@
+#' Edge CV for SBM (cross validation)
+#'
+#' @param dat \code{n} by \code{n} symmetric adjacency matrix
+#' @param k_vec vector of positive integers, one per model, of how many blocks in said model
+#' @param nfolds positive integer
+#' @param tol small positive number
+#' @param verbose boolean
+#'
+#' @return list
+#' @export
 edge_cv_sbm <- function(dat, k_vec, nfolds = 5, tol = 1e-6, verbose = T){
   stopifnot(nrow(dat) == ncol(dat), sum(abs(dat - t(dat))) <= tol, 
             k_vec >= 0)
@@ -45,6 +55,15 @@ edge_cv_sbm <- function(dat, k_vec, nfolds = 5, tol = 1e-6, verbose = T){
   list(k = k, err_vec = err_vec, err_mat_list = err_mat_list)
 }
 
+#' Edge CV for SBM (sample splitting)
+#'
+#' @param dat \code{n} by \code{n} symmetric adjacency matrix
+#' @param k_vec vector of positive integers, one per model, of how many blocks in said model
+#' @param test_prop test proportion
+#' @param tol small positive number
+#'
+#' @return list
+#' @export
 edge_cv_sbm_sample_split <- function(dat, k_vec, test_prop, tol = 1e-6){
   stopifnot(nrow(dat) == ncol(dat), sum(abs(dat - t(dat))) <= tol, test_prop > 0, test_prop < 1,
             k_vec >= 0)
