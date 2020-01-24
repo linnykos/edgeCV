@@ -296,7 +296,7 @@ test_that("edge_cv_sbm works", {
   cluster_idx_truth <- rep(1:3, each = 50)
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   
-  res <- edge_cv_sbm(dat, k_vec = c(1:5), nfold = 5, verbose = F)
+  res <- edge_cv_sbm(dat, k_vec = c(1:5), nfolds = 5, verbose = F)
   
   expect_true(is.list(res))
   expect_true(length(res) == 3)

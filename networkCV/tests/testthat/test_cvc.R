@@ -94,10 +94,10 @@ test_that("cvc_sbm_sample_split works", {
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   k <- 5
   err_mat <- edge_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)$err_mat
-  trials <- 100
+  trials <- 10
   alpha <- 0.05
   
-  res <- cvc_sbm_sample_split(err_mat, trials, alpha)
+  res <- cvc_sbm_sample_split(err_mat, trials, alpha, verbose = F)
   
   expect_true(is.list(res))
   expect_true(all(is.character(res$model_selected)))
@@ -112,10 +112,10 @@ test_that("cvc_sbm_sample_split works on a slightly more interesting example", {
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   k <- 5
   err_mat <- edge_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)$err_mat
-  trials <- 100
+  trials <- 10
   alpha <- 0.05
   
-  res <- cvc_sbm_sample_split(err_mat, trials, alpha)
+  res <- cvc_sbm_sample_split(err_mat, trials, alpha, verbose = F)
   
   expect_true(is.list(res))
   expect_true(all(is.character(res$model_selected)))
@@ -130,10 +130,10 @@ test_that("cvc_sbm_sample_split works when the difference between ranks is small
   k <- 5
   ecv_res <- edge_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)
   err_mat <- ecv_res$err_mat
-  trials <- 200
+  trials <- 10
   alpha <- 0.05
   
-  res <- cvc_sbm_sample_split(err_mat, trials, alpha)
+  res <- cvc_sbm_sample_split(err_mat, trials, alpha, verbose = F)
   
   expect_true(is.list(res))
   expect_true(all(is.character(res$model_selected)))
@@ -147,10 +147,10 @@ test_that("cvc_sbm_sample_split works with negative eigenvalues", {
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   k <- 5
   err_mat <- edge_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)$err_mat
-  trials <- 100
+  trials <- 10
   alpha <- 0.05
   
-  res <- cvc_sbm_sample_split(err_mat, trials, alpha)
+  res <- cvc_sbm_sample_split(err_mat, trials, alpha, verbose = F)
   
   expect_true(is.list(res))
   expect_true(all(is.character(res$model_selected)))
@@ -164,12 +164,28 @@ test_that("cvc_sbm_sample_split works with negative eigenvalues", {
 test_that("cvc_sbm works", {
   set.seed(10)
   b_mat_truth <- matrix(c(1/4, 1/2, 1/4,  1/2, 1/4, 1/4,  1/4, 1/4, 1/6), 3, 3)
-  cluster_idx_truth <- c(rep(1, 45), rep(2, 45), rep(3, 60))
+  cluster_idx_truth <- c(rep(1, 10), rep(2, 10), rep(3, 10))
   dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
   k <- 5
   err_mat_list <- edge_cv_sbm(dat, k_vec = c(1:k), nfold = 5, verbose = F)$err_mat_list
-  trials <- 100
+  trials <- 10
   alpha <- 0.05
   
-  res <- cvc_sbm(err_mat_list, trials, alpha)
+  res <- cvc_sbm(err_mat_list, trials, alpha, verbose = F)
+})
+
+test_that("cvc_sbm works with ncores", {
+  set.seed(10)
+  b_mat_truth <- matrix(c(1/4, 1/2, 1/4,  1/2, 1/4, 1/4,  1/4, 1/4, 1/6), 3, 3)
+  cluster_idx_truth <- c(rep(1, 10), rep(2, 10), rep(3, 10))
+  dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
+  k <- 5
+  err_mat_list <- edge_cv_sbm(dat, k_vec = c(1:k), nfold = 5, verbose = F)$err_mat_list
+  trials <- 10
+  alpha <- 0.05
+  
+  res <- cvc_sbm(err_mat_list, trials, alpha, verbose = F, ncores = 2)
+  res2 <- cvc_sbm(err_mat_list, trials, alpha, verbose = F)
+  
+  expect_true(all.equal(res, res2))
 })

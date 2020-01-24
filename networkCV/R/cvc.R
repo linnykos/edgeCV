@@ -1,31 +1,16 @@
-cvc_sbm_sample_split <- function(err_mat, trials, alpha, verbose = T){
-  stopifnot(length(colnames(err_mat)) == ncol(err_mat))
+#' CVC for SBM (with cross validation)
+#'
+#' @param err_mat_list error matrix list outputted by \code{edge_cv_sbm$err_mat_list}
+#' @param trials number of trials
+#' @param alpha significant level
+#' @param verbose boolean
+#' @param ncores integer or \code{NA}
+#'
+#' @return list
+#' @export
+cvc_sbm <- function(err_mat_list, trials, alpha, verbose = T, ncores = NA){
+  if(!is.na(ncores)) doMC::registerDoMC(cores = ncores)
   
-  n <- nrow(err_mat)
-  k <- ncol(err_mat)
-  err_mat2 <- .clean_err_mat(err_mat)
-  
-  mu_vec <- colMeans(err_mat2)
-  sd_vec <- apply(err_mat2, 2, stats::sd)
-  test_vec <- .extract_max(sqrt(n)*mu_vec/sd_vec, k)
-  
-  boot_mat <- sapply(1:trials, function(b){
-    if(verbose && b %% floor(trials/10) == 0) cat('*')
-    
-    tmp_mat <- .cvc_bootstrap_trial(err_mat2, mu_vec, sd_vec)
-    .extract_max((1/sqrt(n)) * colSums(tmp_mat), k)
-  })
-  
-  p_vec <- sapply(1:k, function(x){
-    length(which(boot_mat[x,] <= test_vec[x]))/ncol(boot_mat)
-  })
-  
-  model_selected <- colnames(err_mat)[which(p_vec <= alpha)]
-  
-  list(model_selected = model_selected, p_vec = p_vec)
-}
-
-cvc_sbm <- function(err_mat_list, trials, alpha, verbose = T){
   for(i in 1:length(err_mat_list)){
     stopifnot(length(colnames(err_mat_list[[i]])) == ncol(err_mat_list[[i]]))
   }
@@ -47,20 +32,77 @@ cvc_sbm <- function(err_mat_list, trials, alpha, verbose = T){
   mu_vec <- colMeans(do.call(rbind, mu_vec_list))
   sd_vec <- apply(do.call(rbind, err_mat_list2_recentered), 2, stats::sd)
   
+  # compute test statistics
   test_vec <- .extract_max(sqrt(n)*mu_vec/sd_vec, k)
-   
-  boot_mat <- sapply(1:trials, function(b){
+  
+  # compute null distribution
+  func <- function(b){
     if(verbose && b %% floor(trials/10) == 0) cat('*')
     
     tmp_mat <- .cvc_bootstrap_trial_cv(err_mat_list2, mu_vec_list, sd_vec)
     .extract_max((1/sqrt(n)) * colSums(tmp_mat), k)
-  })
+  }
   
+  if(!is.na(ncores)){
+    boot_mat <- foreach::"%dopar%"(foreach::foreach(b = 1:trials), func(b))
+    boot_mat <- do.call(rbind, boot_mat)
+  } else {
+    boot_mat <- sapply(1:trials, func)
+  }
+  
+  # compute p-value
   p_vec <- sapply(1:k, function(x){
     length(which(boot_mat[x,] <= test_vec[x]))/ncol(boot_mat)
   })
   
   model_selected <- colnames(err_mat_list[[1]])[which(p_vec <= alpha)]
+  
+  list(model_selected = model_selected, p_vec = p_vec)
+}
+
+#' CVC for SBM (with sample splitting)
+#'
+#' @param err_mat error matrix outputted by \code{edge_cv_sbm_sample_split$err_mat}
+#' @param trials number of trials
+#' @param alpha significant level
+#' @param verbose boolean
+#' @param ncores integer or \code{NA}
+#'
+#' @return list 
+#' @export
+cvc_sbm_sample_split <- function(err_mat, trials, alpha, verbose = T, ncores = NA){
+  if(!is.na(ncores)) doMC::registerDoMC(cores = ncores)
+  
+  stopifnot(length(colnames(err_mat)) == ncol(err_mat))
+  
+  n <- nrow(err_mat)
+  k <- ncol(err_mat)
+  err_mat2 <- .clean_err_mat(err_mat)
+  
+  mu_vec <- colMeans(err_mat2)
+  sd_vec <- apply(err_mat2, 2, stats::sd)
+  test_vec <- .extract_max(sqrt(n)*mu_vec/sd_vec, k)
+  
+  func <- function(b){
+    if(verbose && b %% floor(trials/10) == 0) cat('*')
+    
+    tmp_mat <- .cvc_bootstrap_trial(err_mat2, mu_vec, sd_vec)
+    .extract_max((1/sqrt(n)) * colSums(tmp_mat), k)
+  }
+  
+  if(!is.na(ncores)){
+    boot_mat <- foreach::"%dopar%"(foreach::foreach(b = 1:trials), func(b))
+    boot_mat <- do.call(rbind, boot_mat)
+  } else {
+    boot_mat <- sapply(1:trials, func)
+  }
+  
+  
+  p_vec <- sapply(1:k, function(x){
+    length(which(boot_mat[x,] <= test_vec[x]))/ncol(boot_mat)
+  })
+  
+  model_selected <- colnames(err_mat)[which(p_vec <= alpha)]
   
   list(model_selected = model_selected, p_vec = p_vec)
 }
