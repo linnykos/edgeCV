@@ -3,11 +3,8 @@ library(simulation)
 library(networkCV)
 
 set.seed(10)
-ncores <- NA
-doMC::registerDoMC(cores = ncores)
-
 trials <- 50
-paramMat <- as.matrix(expand.grid(c(30, 100, 300, 1000), c(0, 0.25, 0.5),
+paramMat <- as.matrix(expand.grid(c(30, 100, 300), c(0, 0.25, 0.5),
                                   5, 200, 0.05, 5))
 colnames(paramMat) <- c("n", "rho", "K", "trials", "alpha", "nfold")
 
@@ -45,7 +42,7 @@ criterion <- function(dat, vec, y){
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = trials,
-                                        cores = ncores, as_list = T,
+                                        cores = NA, as_list = T,
                                         filepath = "sparsity_2_tmp.RData",
                                         verbose = T)
 save.image("sparsity_2.RData")

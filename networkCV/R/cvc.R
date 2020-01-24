@@ -41,7 +41,10 @@ cvc_sbm <- function(err_mat_list, trials, alpha, verbose = T, ncores = NA){
     
     set.seed(sum(sd_vec)*100+10*b)
     tmp_mat <- .cvc_bootstrap_trial_cv(err_mat_list2, mu_vec_list, sd_vec)
-    .extract_max((1/sqrt(n)) * colSums(tmp_mat), k)
+    tmp <- .extract_max((1/sqrt(n)) * colSums(tmp_mat), k)
+    
+    if(verbose) print(paste0("Trial ", b, ": Values ", paste0(round(tmp,2), collapse = ", ")))
+    tmp
   }
   
   if(!is.na(ncores)){
@@ -93,7 +96,10 @@ cvc_sbm_sample_split <- function(err_mat, trials, alpha, verbose = T, ncores = N
     
     set.seed(sum(sd_vec)*100+10*b)
     tmp_mat <- .cvc_bootstrap_trial(err_mat2, mu_vec, sd_vec)
-    .extract_max((1/sqrt(n)) * colSums(tmp_mat), k)
+    tmp <- .extract_max((1/sqrt(n)) * colSums(tmp_mat), k)
+    
+    if(verbose) print(paste0("Trial ", b, ": Values ", paste0(round(tmp,2), collapse = ", ")))
+    tmp
   }
   
   if(!is.na(ncores)){

@@ -1,15 +1,47 @@
 rm(list=ls())
+library(simulation)
 library(networkCV)
+
 set.seed(10)
-b_mat_truth <- matrix(c(1/4, 1/2, 1/4,  1/2, 1/4, 1/4,  1/4, 1/4, 1/6), 3, 3)
-cluster_idx_truth <- c(rep(1, 10), rep(2, 10), rep(3, 10))
-dat <- networkCV::generate_sbm(b_mat_truth, cluster_idx_truth)
-k <- 5
-err_mat_list <- networkCV::edge_cv_sbm(dat, k_vec = c(1:k), nfold = 5, verbose = F)$err_mat_list
-trials <- 10
-alpha <- 0.05
-verbose = F
-ncores = 5
+ncores <- NA
+doMC::registerDoMC(cores = ncores)
+
+trials <- 50
+paramMat <- as.matrix(expand.grid(c(30, 100, 300, 1000), c(0, 0.25, 0.5),
+                                  5, 200, 0.05, 5))
+colnames(paramMat) <- c("n", "rho", "K", "trials", "alpha", "nfold")
+
+#############
+
+rule <- function(vec){
+  b_mat <- matrix(0.2, 3, 3) + 0.6*diag(3)
+  n <- vec["n"]
+  n3 <- round(n/3)
+  cluster_idx <- c(rep(1, n3), rep(2, n3), rep(3, vec["n"]-2*n3))
+  if(vec["rho"] >= 0){
+    rho <- 1/(n^vec["rho"])
+  } else {
+    rho <- log(n)/n
+  }
+  dat <- networkCV::generate_sbm(b_mat, cluster_idx, rho)
+  
+  dat
+}
+
+########
+
+idx <- 3; y <- 1; set.seed(y)
+vec <- paramMat[idx,]
+dat <- rule(vec)
+
+ecv_res <- networkCV::edge_cv_sbm(dat, k_vec = c(1:vec["K"]), nfold = vec["nfold"], verbose = F)
+err_mat_list <- ecv_res$err_mat_list
+
+# cvc_res <- networkCV::cvc_sbm(err_mat_list, vec["trials"], vec["alpha"], verbose = F, ncores = 20)
+trials = vec["trials"]
+alpha = vec["alpha"]
+verbose = T
+ncores = 20
 
 if(!is.na(ncores)) doMC::registerDoMC(cores = ncores)
 
@@ -43,11 +75,11 @@ func <- function(b){
   
   set.seed(sum(sd_vec)*100+10*b)
   tmp_mat <- networkCV:::.cvc_bootstrap_trial_cv(err_mat_list2, mu_vec_list, sd_vec)
-  networkCV:::.extract_max((1/sqrt(n)) * colSums(tmp_mat), k)
+  tmp <- networkCV:::.extract_max((1/sqrt(n)) * colSums(tmp_mat), k)
+  
+  if(verbose) print(paste0("Trial ", b, ": Values ", paste0(round(tmp,2), collapse = ", ")))
+  tmp
 }
 
 b <- 0 #debugging purposes
 boot_mat <- foreach::"%dopar%"(foreach::foreach(b = 1:trials), func(b))
-boot_mat <- do.call(rbind, boot_mat)
-
-boot_mat2 <- sapply(1:trials, func)
