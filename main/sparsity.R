@@ -32,8 +32,9 @@ criterion <- function(dat, vec, y){
   ecv_res <- networkCV::edge_cv_sbm(dat, k_vec = c(1:vec["K"]), nfold = vec["nfold"], verbose = F)
   err_mat_list <- ecv_res$err_mat_list
   
-  cvc_res <- networkCV::cvc_sbm(err_mat_list, vec["trials"], vec["alpha"], verbose = T, ncores = 20)
+  cvc_res <- networkCV::cvc_sbm(err_mat_list, vec["trials"], vec["alpha"], verbose = T, ncores = NA)
   
+  print(ecv_res$err_vec)
   print(cvc_res$p_vec)
   
   list(err_vec = ecv_res$err_vec, p_vec = cvc_res$p_vec)
@@ -47,7 +48,7 @@ criterion <- function(dat, vec, y){
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = trials,
-                                        cores = NA, as_list = T,
+                                        cores = 20, as_list = T,
                                         filepath = "sparsity_3_tmp.RData",
                                         verbose = T)
 save.image("sparsity_3.RData")
