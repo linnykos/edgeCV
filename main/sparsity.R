@@ -28,10 +28,13 @@ rule <- function(vec){
 }
 
 criterion <- function(dat, vec, y){
+  print(y)
   ecv_res <- networkCV::edge_cv_sbm(dat, k_vec = c(1:vec["K"]), nfold = vec["nfold"], verbose = F)
   err_mat_list <- ecv_res$err_mat_list
   
-  cvc_res <- networkCV::cvc_sbm(err_mat_list, vec["trials"], vec["alpha"], verbose = F, ncores = 20)
+  cvc_res <- networkCV::cvc_sbm(err_mat_list, vec["trials"], vec["alpha"], verbose = T, ncores = 20)
+  
+  print(cvc_res$p_vec)
   
   list(err_vec = ecv_res$err_vec, p_vec = cvc_res$p_vec)
 }
