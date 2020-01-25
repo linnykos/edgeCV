@@ -48,7 +48,7 @@ criterion <- function(dat, vec, y){
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = trials,
-                                        cores = 20, as_list = T,
+                                        cores = 10, as_list = T,
                                         filepath = "sparsity_3_tmp.RData",
                                         verbose = T)
 save.image("sparsity_3.RData")
