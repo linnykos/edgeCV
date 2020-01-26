@@ -4,7 +4,7 @@ library(networkCV)
 
 set.seed(10)
 trials <- 3
-paramMat <- as.matrix(expand.grid(c(30), c(0.5),
+paramMat <- as.matrix(expand.grid(c(600), c(0.5),
                                   5, 200, 0.05, 5))
 colnames(paramMat) <- c("n", "rho", "K", "trials", "alpha", "nfold")
 
