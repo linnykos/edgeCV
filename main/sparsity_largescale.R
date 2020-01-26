@@ -3,7 +3,8 @@ args <- commandArgs(trailingOnly=TRUE)
 args <- as.numeric(args[1])
 print(paste0(args, ":", class(args)))
 
-library(simulation)
+## to run: Rscript-3.6.1 --vanilla sparsity_largescale.R 1
+
 library(networkCV)
 
 set.seed(10)
