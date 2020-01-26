@@ -9,7 +9,7 @@
 #' @return list
 #' @export
 cvc_sbm <- function(err_mat_list, trials, alpha, verbose = T, ncores = NA){
-  # if(!is.na(ncores)) doMC::registerDoMC(cores = ncores)
+  if(!is.na(ncores)) doMC::registerDoMC(cores = ncores)
   
   for(i in 1:length(err_mat_list)){
     stopifnot(length(colnames(err_mat_list[[i]])) == ncol(err_mat_list[[i]]))
@@ -47,15 +47,15 @@ cvc_sbm <- function(err_mat_list, trials, alpha, verbose = T, ncores = NA){
     tmp
   }
   
-  # if(!is.na(ncores)){
-  #   b <- 0 #debugging purposes
-  #   boot_mat <- foreach::"%dopar%"(foreach::foreach(b = 1:trials), func2(b))
-  #   
-  #   if(verbose) print("Done bootstrapping")
-  #   boot_mat <- do.call(cbind, boot_mat)
-  # } else {
+  if(!is.na(ncores)){
+    b <- 0 #debugging purposes
+    boot_mat <- foreach::"%dopar%"(foreach::foreach(b = 1:trials), func2(b))
+
+    if(verbose) print("Done bootstrapping")
+    boot_mat <- do.call(cbind, boot_mat)
+  } else {
     boot_mat <- sapply(1:trials, func2)
- # }
+  }
   
   if(verbose) print("Computing p-values")
   # compute p-value

@@ -1,14 +1,18 @@
-rm(list=ls())
+#!/usr/bin/env Rscript
+args <- commandArgs(trailingOnly=TRUE)
+args <- as.numeric(args[1])
+print(paste0(args, ":", class(args)))
+
 library(simulation)
 library(networkCV)
 
 set.seed(10)
-trials <- 50
-paramMat <- as.matrix(expand.grid(c(30, 100, 300), c(0, 0.25, 0.5),
+trials <- 3
+paramMat <- as.matrix(expand.grid(c(30), c(0.5),
                                   5, 200, 0.05, 5))
 colnames(paramMat) <- c("n", "rho", "K", "trials", "alpha", "nfold")
 
-#############
+##########
 
 rule <- function(vec){
   b_mat <- matrix(0.2, 3, 3) + 0.6*diag(3)
@@ -30,7 +34,7 @@ criterion <- function(dat, vec, y){
   ecv_res <- networkCV::edge_cv_sbm(dat, k_vec = c(1:vec["K"]), nfold = vec["nfold"], verbose = F)
   err_mat_list <- ecv_res$err_mat_list
   
-  cvc_res <- networkCV::cvc_sbm(err_mat_list, vec["trials"], vec["alpha"], verbose = T, ncores = 20)
+  cvc_res <- networkCV::cvc_sbm(err_mat_list, vec["trials"], vec["alpha"], verbose = T, ncores = NA)
   
   print(ecv_res$err_vec)
   print(cvc_res$p_vec)
@@ -38,15 +42,18 @@ criterion <- function(dat, vec, y){
   list(err_vec = ecv_res$err_vec, p_vec = cvc_res$p_vec)
 }
 
-# idx <- 1; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
-# idx <- 4; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
+##############
 
+idx <- 1
+res_list <- vector("list", trials)
+save.image(paste0("sparsity_largescale_", args, ".RData"))
 
-###########################
+for(i in 1:trials){
+  y <- args*20+i
+  set.seed(y)
+  
+  res_list[[i]] <- criterion(rule(paramMat[idx,]), paramMat[idx,], y)
+  save.image(paste0("sparsity_largescale_", args, ".RData"))
+}
 
-res <- simulation::simulation_generator(rule = rule, criterion = criterion,
-                                        paramMat = paramMat, trials = trials,
-                                        cores = NA, as_list = T,
-                                        filepath = "sparsity_3_tmp.RData",
-                                        verbose = T)
-save.image("sparsity_3.RData")
+save.image(paste0("sparsity_largescale_", args, ".RData"))

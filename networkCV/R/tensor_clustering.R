@@ -24,7 +24,7 @@ tensor_clustering <- function(dat, K, reps = 10, maxit = 100, verbose = T, tol =
       if (verbose) cat('step = ', iter, '\n' )
       iter <- iter + 1
       
-      # deal with cluster that have just lose all their members
+      # deal with cluster do not have any members
       counts <- table(clustering)
       if(any(counts == 0)) clustering <- .resolve_empty_cluster(clustering)
       
