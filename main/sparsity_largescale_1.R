@@ -1,9 +1,4 @@
-#!/usr/bin/env Rscript
-args <- commandArgs(trailingOnly=TRUE)
-args <- as.numeric(args[1])
-print(paste0(args, ":", class(args)))
-
-## to run: Rscript-3.6.1 --vanilla sparsity_largescale.R 1
+args <- 1
 
 library(networkCV)
 

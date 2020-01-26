@@ -38,7 +38,7 @@ criterion <- function(dat, vec, y){
   list(err_vec = ecv_res$err_vec, p_vec = cvc_res$p_vec)
 }
 
-# idx <- 1; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
+  # idx <- 1; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
 # idx <- 4; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
 
 
