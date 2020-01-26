@@ -23,6 +23,26 @@ generate_sbm <- function(b_mat, cluster_idx, rho = 1){
   adj_mat
 }
 
+generate_tensor <- function(b_tensor, cluster_idx, rho) {
+  stopifnot(class(b_tensor) == "array", length(dim(b_tensor)) == 3,
+            dim(b_tensor)[2] == dim(b_tensor)[3])
+  
+  k <- dim(b_tensor)[2]
+  n <- length(cluster_idx)
+  p <- dim(b_tensor)[1]
+  
+  adj_array <- array(0, dim = c(p, n, n))
+  
+  for (i in 1:p){ 
+    adj_array[i,,] <- generate_sbm(b_tensor[i,,], cluster_idx, rho = rho)
+  }
+  
+  
+  adj_array
+}
+
+##################3
+
 .convert_idx_to_mat <- function(cluster_idx){
   k <- max(cluster_idx)
   n <- length(cluster_idx)
