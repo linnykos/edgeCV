@@ -25,12 +25,11 @@ tensor_clustering <- function(dat, K, reps = 10, maxit = 100, verbose = T, tol =
       iter <- iter + 1
       
       # deal with cluster do not have any members
-      counts <- table(clustering)
-      if(any(counts == 0)) clustering <- .resolve_empty_cluster(clustering)
+      clustering <- .resolve_empty_cluster(clustering)
       
       b_tensor <- .form_prediction_tensor(dat, clustering)
       dist_mat <- .compute_distance_tensors(dat, b_tensor)
-      ss_current <- .compute_ss(dist_mat)
+      ss_current <- .compute_ss(clustering, dist_mat)
       
       if (ss_current - ss_prev > 1e-6) break()
       
@@ -38,7 +37,7 @@ tensor_clustering <- function(dat, K, reps = 10, maxit = 100, verbose = T, tol =
       ss_prev <- ss_current
       b_tensor_prev <- b_tensor
       
-      clustering <- .update_cluster_tensors(clustering, dist_mat)
+      clustering <- .update_cluster_tensors(dist_mat)
     }
     
     if (ss_current < ss_best){
@@ -51,65 +50,81 @@ tensor_clustering <- function(dat, K, reps = 10, maxit = 100, verbose = T, tol =
   list(clustering = clustering_best, b_tensor = b_tensor_best)
 }
 
-.resolve_empty_clustering <- function(vec){
-  empties <- which(counts == 0)
-  for (i in empties){
-    from <- sample(which(counts > 1), 1,0)
-    lonely <- sample(which(idx == from), 1, 0)
-    idx[lonely] <- i
-    counts[i] <- 1
-    counts[from] <- counts[from]-1; 
-  }   
-}
-
-
-.form_prediction_tensor <-function(A, idx, k){
-  p <- dim(A)[1]
-  m.1 <- dim(A)[2]
-  idx.1 <- idx[1:m.1]
-  center <- array(0, dim=c(p,k,k))
-  for (i in 1:k){
-    for (j in i:k){
-      if ((sum(idx.1 == i) ==1) & (sum(idx==j)==1) ) {
-        center[,i,j] <-0.5
-        center[,j,i] <- center[,i,j]
-      } else{
-        center[,i,j] <- apply(A[,idx.1==i,idx==j],1,mean)
-        center[,j,i] <- center[,i,j]
+.resolve_empty_clustering <- function(clustering){
+  counts <- table(clustering)
+  tmp <- clustering
+  
+  if(any(counts == 0)) {
+    empty_idx <- which(counts == 0)
+    
+    if(length(empty_idx) > 0){
+      
+      for (i in empty_idx){
+        # move idx into the empty cluster
+        from <- sample(which(counts > 1), 1)
+        idx <- sample(which(idx == from), 1)
+        tmp[idx] <- i
+        counts[i] <- 1
+        counts[from] <- counts[from]-1
       }
     }
   }
-  return(center)
+    
+  tmp
 }
 
-.compute_distance_tensors <- function(dat, b_tensor){
-  # A: p*m*m
-  # center: p*m*k
-  k <- dim(center)[3]
-  m <- dim(A)[3]
-  D <- matrix(0, m, k)
-  for (j in 1:m){
-    for (i in 1:k){
-      D[j,i] <- norm( (A[,,j] - center[,,i]), 'F')^2
+
+.form_prediction_tensor <-function(dat, clustering){
+  K <- max(clustering)
+  
+  p <- dim(dat)[1]
+  n <- dim(dat)[2]
+  
+  b_tensor <- array(NA, dim=c(p,K,K))
+  
+  for (i in 1:K){
+    for (j in i:K){
+      # only one node in both clusters
+      if ((sum(clustering == i) == 1) & (sum(clustering == j) == 1)) {
+        b_tensor[,i,j] <- 0.5
+        b_tensor[,j,i] <- b_tensor[,i,j]
+        
+      } else{
+        b_tensor[,i,j] <- apply(dat[,clustering==i, clustering==j], 1, mean)
+        b_tensor[,j,i] <- b_tensor[,i,j]
+      }
     }
   }
-  return(D)
+
+  b_tensor
 }
 
-.compute_ss <- function(){
-  totsumD <- sum(D[(idx-1)*m+(1:m)])
-}
+.l2norm <- function(x){sqrt(sum(x^2))}
 
-
-.update_cluster_tensors <- function(clustering, dist_mat){
-  nidx <- apply(D, 1, which.min)
-  moved <- which(nidx != previdx)
-  # resolve tie in favor of not move
-  if (length(moved)>0) {
-    moved <- moved[D[(previdx[moved]-1)*m+moved] > min(D[moved,])] 
-  } 
-  if (length(moved) ==0){
-    break
+.compute_distance_tensors <- function(dat, b_tensor){
+  # dat: p*n*n
+  # b_tensor: p*k*k
+  
+  K <- dim(b_tensor)[3]
+  n <- dim(dat)[3]
+  dist_mat <- matrix(0, n, K)
+  
+  for (j in 1:n){
+    for (i in 1:K){
+      dist_mat[j,i] <- .l2norm(dat[,,j] - b_tensor[,,i])
+    }
   }
-  idx[moved] = nidx[moved]
+  
+  dist_mat
+}
+
+# uses fancy indexing to grab the value of dist_mat corresponding to each point
+.compute_ss <- function(clustering, dist_mat){
+  n <- nrow(dist_mat)
+  
+  sum(dist_mat[(clustering-1)*n+(1:n)])
+}
+
+.update_cluster_tensors <- function(dist_mat){
+  apply(dist_mat, 1, which.min)
 }
