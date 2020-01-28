@@ -1,37 +1,45 @@
-rm(list=ls())
-set.seed(20)
-b_mat <- 0.5*diag(3)
-b_mat <- b_mat + 0.2
+set.seed(10)
+beta <- 0.25
+b_mat_truth <- (1-1.5*beta)*diag(3) + beta*rep(1,3) %*% t(rep(1,3))
+cluster_idx_truth <- rep(1:3, each = 10)
+dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
+k <- 5
+ecv_res <- edge_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)
+err_mat <- ecv_res$err_mat
 
-b_tensor <- array(NA, c(10, 3, 3))
-for(i in 1:dim(b_tensor)[1]){
-  b_tensor[i,,] <- b_mat
-}
+B = 200
+alpha = 0.05
 
-cluster_idx <- rep(1:3, each = 5)
+###########
 
-dat <- generate_tensor(b_tensor, cluster_idx, 1)
-k_vec <- 1:5
-trials = 5
-test_prop = 0.1
-tol = 1e-6
-verbose = T
+clean_res <- .clean_err_mat(err_mat)
 
-p <- dim(dat)[1]
-n <- dim(dat)[2]
+err_mat_c <- clean_res$err_mat_c
+err_mat_c_ind <- clean_res$ind
+n <- nrow(err_mat_c)
+M <- ncol(err_mat_c)
 
-test_idx <- .generate_tensor_indices(p, n, round(test_prop*p*n*(n-1)/2))
+err_mean <- apply(err_mat_c, 2, mean)
+err_mat_center <- err_mat_c - matrix(err_mean, nrow = n, ncol = M, byrow = T)
 
-dat_NA <- dat
-dat_NA[test_idx] <- NA
+gauss_mat <- matrix(stats::rnorm(n*B), ncol = B)
 
-# generate the error matrix
-err_mat <- matrix(NA, nrow = sum(is.na(dat_NA)), ncol = length(k_vec))
-colnames(err_mat) <- k_vec
+sgmb_p_val <- sapply(1:M, function(m){
+  err_diff_center <- err_mat_center[,m] - err_mat_center[,-m, drop=F]
+  err_mean_diff <- err_mean[m] - err_mean[-m]
+  
+  sd_vec <- apply(err_diff_center, 2, sd)
+  err_mean_diff_scale <- sqrt(n) * err_mean_diff / sd_vec
+  
+  err_diff_center_scale <- err_diff_center / 
+    matrix(sd_vec, nrow = n, ncol = ncol(err_diff_center), byrow = T)
+  
+  # compute the bootstrap statistic
+  test_stat_vec <- sapply(1:B, function(ib){
+    sqrt(n) * max(apply(err_diff_center_scale*gauss_mat[,ib], 2, mean))
+  })
+  
+  mean(test_stat_vec > max(err_mean_diff_scale))
+})
 
-# impute and compute errors
-for(i in k_vec){
-  dat_impute <- .impute_tensor(dat_NA, k_vec[i], test_prop)
-  err_mat[,i] <- (dat_impute[test_idx] - dat[test_idx])^2
-}
-
+sgmb_p_val
