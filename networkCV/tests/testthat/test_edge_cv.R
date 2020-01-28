@@ -144,7 +144,7 @@ test_that(".extract_eigenvectors is calculating weighted eigenvectors correctly"
   
   res2 <- eigen_res$vectors[,idx] %*% diag(c(sqrt(eigen_val[idx[1]]), -sqrt(abs(eigen_val[idx[2]]))))
   
-  stopifnot(sum(abs(res - res2)) <= 1e-6)
+  expect_true(sum(abs(res - res2)) <= 1e-6)
 })
 
 #####################

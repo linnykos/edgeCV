@@ -172,6 +172,8 @@ test_that("cvc_sbm works", {
   alpha <- 0.05
   
   res <- cvc_sbm(err_mat_list, trials, alpha, verbose = F)
+  
+  expect_true(is.list(res))
 })
 
 test_that("cvc_sbm works with ncores", {

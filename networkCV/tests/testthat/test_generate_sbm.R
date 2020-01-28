@@ -42,3 +42,28 @@ test_that("generate_sbm works for a random matrix", {
   
   expect_true(sum(abs(pop_mat1 - res1)) <= sum(abs(pop_mat1 -res2)))
 })
+
+#######################
+
+## generate_tensor is correct
+
+test_that("generate_tensor works", {
+  set.seed(10)
+  b_mat <- 0.5*diag(3)
+  b_mat <- b_mat + 0.2
+
+  b_tensor <- array(NA, c(10, 3, 3))
+  for(i in 1:dim(b_tensor)[1]){
+    b_tensor[i,,] <- b_mat
+  }
+  
+  cluster_idx <- rep(1:3, each = 5)
+  
+  res <- generate_tensor(b_tensor, cluster_idx, 1)
+  
+  expect_true(class(res) == "array")
+  expect_true(all(dim(res) == c(10, 15, 15)))
+  for(i in 1:dim(b_tensor)[1]){
+    expect_true(sum(abs(res[i,,] - t(res[i,,]))) <= 1e-16)
+  }
+})
