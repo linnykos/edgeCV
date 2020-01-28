@@ -68,7 +68,7 @@ for(i in 1:spar_level){
   rownames(tmp) <- c("Over","Exact","Under")
   colnames(tmp) <- as.character(paste0("n=",n_vec[1:ncol(mat_list[[i]])]))
   graphics::barplot(as.table(tmp), horiz = TRUE, col = col_vec[c(2,1,3)], 
-                    main = paste0("Sparse-setting\nNCV: Rho = ", main_vec[i]),
+                    main = paste0("SBM-setting\nECV: Rho = ", main_vec[i]),
                     cex.names = 0.8)
   
   # reformat and plot cvc
@@ -81,7 +81,7 @@ for(i in 1:spar_level){
   rownames(tmp) <- c("Over","Exact","Under","None")
   colnames(tmp) <- as.character(paste0("n=",n_vec[1:ncol(mat_list[[i]])]))
   graphics::barplot(as.table(tmp), horiz = TRUE, col = col_vec[c(2,1,3,4)], 
-                    main = paste0("Sparse-setting\nNCV+CVC: Rho = ", main_vec[i]),
+                    main = paste0("SBM-setting\nECV+CVC: Rho = ", main_vec[i]),
                     cex.names = 0.8)
   graphics.off()
 }

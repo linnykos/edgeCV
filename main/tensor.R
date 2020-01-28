@@ -32,7 +32,6 @@ rule <- function(vec){
 }
 
 criterion <- function(dat, vec, y){
-  print(y)
   ecv_res <- networkCV::edge_cv_sbm_tensor(dat, k_vec = c(1:vec["K"]), trials = 5, test_prop = 0.1, verbose = F)
   
   list(err_vec = ecv_res$err_vec)
