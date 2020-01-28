@@ -4,7 +4,7 @@ library(networkCV)
 
 set.seed(10)
 trials <- 50
-paramMat <- as.matrix(expand.grid(c(10, 30, 100), c(0, 0.25, 0.5),
+paramMat <- as.matrix(expand.grid(c(10, 30, 100, 200), c(0, 0.25, 0.5),
                                   5, 200, 0.05, 5))
 colnames(paramMat) <- c("n", "rho", "K", "trials", "alpha", "nfold")
 
@@ -39,7 +39,7 @@ criterion <- function(dat, vec, y){
 }
 
 # idx <- 1; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
-# idx <- 4; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
+# idx <- 3; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
 
 
 ###########################
