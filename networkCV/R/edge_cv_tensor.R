@@ -2,7 +2,8 @@
 #'
 #' @param dat \code{p} by \code{n} by \code{n} symmetric adjacency matrix
 #' @param k_vec vector of positive integers, one per model, of how many blocks in said model
-#' @param nfolds positive integer
+#' @param trials positive integer
+#' @param test_prop number between 0 and 1
 #' @param tol small positive number
 #' @param verbose boolean
 #'

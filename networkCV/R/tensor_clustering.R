@@ -23,7 +23,7 @@ tensor_clustering <- function(dat, K, reps = 10, maxit = 100, verbose = F, tol =
   dat_vec <- t(matrix(dat, p*n, n))
   
   for(rep in 1:reps){
-    clustering <- kmeans(dat_vec, K)$cluster 
+    clustering <- stats::kmeans(dat_vec, K)$cluster 
     iter <- 0
     ss_prev <- Inf
     

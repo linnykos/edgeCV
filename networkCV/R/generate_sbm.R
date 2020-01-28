@@ -23,6 +23,16 @@ generate_sbm <- function(b_mat, cluster_idx, rho = 1){
   adj_mat
 }
 
+#' Generate tensor SBM
+#'
+#' @param b_tensor connectivity tensor as an \code{array}, organized so the dimension is \code{p} by \code{n} by \code{n},
+#' representing \code{p} symmetric matrices all values between \code{0} and \code{1} 
+#' @param cluster_idx vector of length equal to the number of nodes \code{n}, where each node is 
+#' assigned to a positive integer from \code{1} to \code{max(cluster_idx)}
+#' @param rho  sparsity index, between \code{0} and \code{1} 
+#'
+#' @return a \code{array}
+#' @export
 generate_tensor <- function(b_tensor, cluster_idx, rho) {
   stopifnot(class(b_tensor) == "array", length(dim(b_tensor)) == 3,
             dim(b_tensor)[2] == dim(b_tensor)[3])

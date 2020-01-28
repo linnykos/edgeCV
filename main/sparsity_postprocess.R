@@ -1,4 +1,6 @@
 rm(list=ls())
+load("../results/sparsity_largescale_all.RData")
+res_largescale <- res
 load("../results/sparsity_2.RData")
 
 n_level <- 3
@@ -7,9 +9,12 @@ spar_level <- 3
 # for each sparsity level, compute the amount overselected, exactly selected, and underselected for each n
 mat_list <- lapply(1:spar_level, function(i){
   tmp_res <- res[((i-1)*n_level+1):(i*n_level)]
+  if(i == 3){
+    tmp_res[length(tmp_res)+1] <- res_largescale
+  }
   
   # loop over all n
-  vec <- sapply(1:n_level, function(n){
+  vec <- sapply(1:length(tmp_res), function(n){
     
     # clean results
     b <- sapply(tmp_res[[n]], function(x){all(is.na(x))})
@@ -27,11 +32,14 @@ mat_list <- lapply(1:spar_level, function(i){
       
       # next do cvc
       idx <- which(tmp_res2[[x]]$p_vec <= 0.05)
-      if(length(idx) == 0) {tmp_vec[7] <- tmp_vec[7]+1
+      if(length(idx) == 0) {
+        tmp_vec[4] <- tmp_vec[4]+1
+        # what to do if none are selected
+        # tmp_vec[7] <- tmp_vec[7]+1
       } else if(3 %in% idx) {tmp_vec[5] <- tmp_vec[5]+1
       } else if(all(idx < 3)){tmp_vec[4] <- tmp_vec[4]+1
       } else if(all(idx > 3)){tmp_vec[6] <- tmp_vec[6]+1
-      } else tmp_vec[8] <- tmp_vec[8]+1
+      } else tmp_vec[4] <- tmp_vec[4]+1 #tmp_vec[8] <- tmp_vec[8]+1 #what to do when results are logically incoherent
     }
     
     tmp_vec
@@ -48,16 +56,20 @@ col_vec <- c(rgb(165, 217, 151, maxColorValue = 255), #green
 
 # plot the bars (from top to bottom: none, underest, exact ext, overest)
 main_vec <- c("1", "1/n^0.25", "1/n^0.5")
+n_vec <- as.character(c(paramMat[1:3], 600))
 for(i in 1:spar_level){
-  #png(paste0("../figures/sparsity_",i,".png"), height = 1200, width = 2000, res = 300, units = "px")
+  png(paste0("../figures/sparsity_2_",i,".png"), height = 1100, width = 2000, res = 300, units = "px")
   par(mfrow = c(1,2), mar = c(4,4,4,0.5))
   
   # reformat and plot ecv
   tmp <- as.table(mat_list[[i]][1:3,])
+  tmp <- apply(tmp,2,function(x){x/sum(x)*50})
   tmp <- tmp[c(3,2,1), ]
   rownames(tmp) <- c("Over","Exact","Under")
-  colnames(tmp) <- as.character(paste0("n=",paramMat[1:n_level,1]))
-  graphics::barplot(as.table(tmp), horiz = TRUE, col = col_vec[c(2,1,3)], main = paste0("Sparse-setting\nNCV: Rho = ", main_vec[i]))
+  colnames(tmp) <- as.character(paste0("n=",n_vec[1:ncol(mat_list[[i]])]))
+  graphics::barplot(as.table(tmp), horiz = TRUE, col = col_vec[c(2,1,3)], 
+                    main = paste0("Sparse-setting\nNCV: Rho = ", main_vec[i]),
+                    cex.names = 0.8)
   
   # reformat and plot cvc
   tmp <- mat_list[[i]][4:8,]
@@ -67,7 +79,9 @@ for(i in 1:spar_level){
   tmp <- as.table(tmp)
   tmp <- tmp[c(3,2,1,4), ]
   rownames(tmp) <- c("Over","Exact","Under","None")
-  colnames(tmp) <- as.character(paste0("n=",paramMat[1:n_level,1]))
-  graphics::barplot(as.table(tmp), horiz = TRUE, col = col_vec[c(2,1,3,4)], main = paste0("Sparse-setting\nNCV+CVC: Rho = ", main_vec[i]))
-  #graphics.off()
+  colnames(tmp) <- as.character(paste0("n=",n_vec[1:ncol(mat_list[[i]])]))
+  graphics::barplot(as.table(tmp), horiz = TRUE, col = col_vec[c(2,1,3,4)], 
+                    main = paste0("Sparse-setting\nNCV+CVC: Rho = ", main_vec[i]),
+                    cex.names = 0.8)
+  graphics.off()
 }
