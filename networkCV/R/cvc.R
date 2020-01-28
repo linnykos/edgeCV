@@ -57,6 +57,7 @@ cvc_sbm <- function(err_mat_list, trials, alpha, verbose = T, ncores = NA){
     boot_mat <- sapply(1:trials, func2)
   }
   
+  # SUSPECTED BUG HERE
   if(verbose) print("Computing p-values")
   # compute p-value
   p_vec <- sapply(1:k, function(x){
