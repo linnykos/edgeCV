@@ -20,20 +20,22 @@ rule <- function(vec){
   } else {
     rho <- log(n)/n
   }
-  dat <- networkCV::generate_tensor(b_mat, cluster_idx, rho)
+  
+  b_tensor <- array(NA, c(vec["n"], 3, 3))
+  for(i in 1:dim(b_tensor)[1]){
+    b_tensor[i,,] <- b_mat
+  }
+  
+  dat <- networkCV::generate_tensor(b_tensor, cluster_idx, rho)
   
   dat
 }
 
 criterion <- function(dat, vec, y){
   print(y)
-  ecv_res <- networkCV::edge_cv_sbm(dat, k_vec = c(1:vec["K"]), nfold = vec["nfold"], verbose = F)
-  err_mat_list <- ecv_res$err_mat_list
+  ecv_res <- networkCV::edge_cv_sbm_tensor(dat, k_vec = c(1:vec["K"]), trials = 5, test_prop = 0.1, verbose = F)
   
-  print(ecv_res$err_vec)
-  print(cvc_res$p_vec)
-  
-  list(err_vec = ecv_res$err_vec, p_vec = cvc_res$p_vec)
+  list(err_vec = ecv_res$err_vec)
 }
 
 # idx <- 1; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
@@ -45,6 +47,6 @@ criterion <- function(dat, vec, y){
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = trials,
                                         cores = 20, as_list = T,
-                                        filepath = "sparsity_3_tmp.RData",
+                                        filepath = "tensor_tmp.RData",
                                         verbose = T)
-save.image("sparsity_3.RData")
+save.image("tensor.RData")
