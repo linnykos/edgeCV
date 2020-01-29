@@ -4,7 +4,7 @@ library(networkCV)
 
 set.seed(10)
 trials <- 100
-paramMat <- as.matrix(expand.grid(c(100), c(seq(0, 0.5, length.out = 11), -1),
+paramMat <- as.matrix(expand.grid(c(600), c(seq(0, 0.5, length.out = 11), -1),
                                   5, 200, 5))
 colnames(paramMat) <- c("n", "rho", "K", "trials", "nfold")
 
@@ -26,7 +26,6 @@ rule <- function(vec){
 }
 
 criterion <- function(dat, vec, y){
-  print(y)
   ecv_res <- networkCV::edge_cv_sbm(dat, k_vec = c(1:vec["K"]), nfold = vec["nfold"], verbose = F)
   err_mat_list <- ecv_res$err_mat_list
   
@@ -44,6 +43,6 @@ criterion <- function(dat, vec, y){
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = trials,
                                         cores = 20, as_list = T,
-                                        filepath = "sparsity_3_tmp.RData",
+                                        filepath = "../results/sparsity_3_tmp.RData",
                                         verbose = T)
-save.image("sparsity_3.RData")
+save.image("../results/sparsity_3.RData")
