@@ -6,7 +6,7 @@ set.seed(10)
 trials <- 100
 paramMat <- as.matrix(expand.grid(c(100), c(seq(0, 0.5, length.out = 11)),
                                   c(3:5),
-                                  5, 200, 5))
+                                  6, 200, 5))
 colnames(paramMat) <- c("n", "rho", "K", "num_model", "trials", "nfold")
 
 #############
@@ -37,7 +37,7 @@ criterion <- function(dat, vec, y){
 }
 
 # idx <- 1; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
-# idx <- 5; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
+# idx <- 24; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
 
 
 ###########################
