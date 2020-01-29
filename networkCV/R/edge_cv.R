@@ -38,7 +38,7 @@ edge_cv_sbm <- function(dat, k_vec, nfolds = 5, tol = 1e-6, verbose = T){
     # impute and compute errors
     for(i in k_vec){
       dat_impute <- .impute_matrix(dat_NA, k_vec[i], 1/nfolds)
-      dat_impute <- .sbm_projection(dat_impute, k_vec[i])
+      dat_impute <- .sbm_projection(dat_impute, k_vec[i], dat_org = dat_NA)
       err_mat[,i] <- (dat_impute[test_idx] - dat[test_idx])^2
     }
     
@@ -152,8 +152,8 @@ edge_cv_sbm_sample_split <- function(dat, k_vec, test_prop, tol = 1e-6){
   eigen_res$vectors %*% diag_mat
 }
 
-.form_prediction_sbm <- function(dat_impute, cluster_idx){
-  diag(dat_impute) <- 0
+.form_prediction_sbm <- function(dat, cluster_idx){
+  diag(dat) <- NA
   K <- max(cluster_idx)
   
   b_mat <- matrix(NA, K, K)
@@ -163,11 +163,11 @@ edge_cv_sbm_sample_split <- function(dat, k_vec, test_prop, tol = 1e-6){
       
       if(i != j){
         idx_j <- which(cluster_idx == j)
-        b_mat[i,j] <- mean(dat_impute[idx_i, idx_j])
+        b_mat[i,j] <- mean(dat[idx_i, idx_i], na.rm = T)
         b_mat[j,i] <- b_mat[i,j]
         
       } else {
-        b_mat[i,i] <- sum(dat_impute[idx_i, idx_i])/(2*choose(length(idx_i), 2))
+        b_mat[i,i] <- mean(dat[idx_i, idx_i], na.rm = T)
       }
     }
   }
@@ -175,9 +175,16 @@ edge_cv_sbm_sample_split <- function(dat, k_vec, test_prop, tol = 1e-6){
   b_mat
 }
 
-.sbm_projection <- function(dat_impute, K){
+# optional argument, dat_org which was the original matrix (with missing values)
+.sbm_projection <- function(dat_impute, K, dat_org = NA){
   cluster_idx <- .spectral_clustering(dat_impute, K)
-  b_mat <- .form_prediction_sbm(dat_impute, cluster_idx)
+  
+  if(all(is.na(dat_org))){
+    b_mat <- .form_prediction_sbm(dat_impute, cluster_idx)
+  } else {
+    b_mat <- .form_prediction_sbm(dat_org, cluster_idx)
+  }
+  
   
   sapply(1:ncol(dat_impute), function(x){
     b_mat[cluster_idx[x], cluster_idx]

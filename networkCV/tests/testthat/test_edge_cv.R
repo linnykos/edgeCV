@@ -47,6 +47,21 @@ test_that(".impute_matrix works", {
   expect_true(all(dim(dat) == dim(res)))
 })
 
+test_that(".impute_matrix works for k = 1", {
+  set.seed(10)
+  b_mat <- 0.5*diag(3)
+  b_mat <- b_mat + 0.2
+  cluster_idx <- rep(1:3, each = 50)
+  dat <- generate_sbm(b_mat, cluster_idx)
+  test_prop <- 0.1
+  dat_NA <- .remove_entries(dat, test_prop)
+  
+  res <- .impute_matrix(dat_NA, 1, test_prop)
+  svd_res <- svd(res)
+  
+  expect_true(sum(abs(svd_res$d[-1])) <= 1e-6)
+})
+
 test_that(".impute_matrix works reasonably well", {
   set.seed(10)
   b_mat <- 0.5*diag(3)
@@ -190,6 +205,22 @@ test_that(".form_prediction_sbm works reasonable well", {
   expect_true(sum(abs(res - b_mat)) <= sum(abs(res2 - b_mat)))
 })
 
+test_that(".form_prediction_sbm works with NA", {
+  set.seed(10)
+  b_mat <- 0.5*diag(3)
+  b_mat <- b_mat + 0.2
+  cluster_idx_truth <- rep(1:3, each = 50)
+  dat <- generate_sbm(b_mat, cluster_idx_truth)
+  test_prop <- 0.1
+  dat_NA <- .remove_entries(dat, test_prop)
+  dat_impute <- .impute_matrix(dat_NA, ncol(b_mat), test_prop)
+  cluster_idx <- .spectral_clustering(dat_impute, ncol(b_mat))
+  
+  res <- .form_prediction_sbm(dat_NA, cluster_idx)
+  
+  expect_true(all(dim(res) == dim(b_mat)))
+})
+
 ################
 
 ## .sbm_projection is correct
@@ -207,6 +238,22 @@ test_that(".sbm_projection works", {
   res <- .sbm_projection(dat_impute, ncol(b_mat_truth))
   
   expect_true(all(dim(res) == dim(dat)))
+})
+
+test_that(".sbm_projection works for k = 1", {
+  set.seed(10)
+  b_mat_truth <- 0.5*diag(3)
+  b_mat_truth <- b_mat_truth + 0.2
+  cluster_idx_truth <- rep(1:3, each = 50)
+  dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
+  test_prop <- 0.1
+  dat_NA <- .remove_entries(dat, test_prop)
+  dat_impute <- .impute_matrix(dat_NA, ncol(b_mat_truth), test_prop)
+  
+  res <- .sbm_projection(dat_impute, 1)
+  mean_val <- mean(res)
+  
+  expect_true(sum(abs(res - mean_val)) <= 1e-6)
 })
 
 test_that(".sbm_projection works reasonably well", {
@@ -231,6 +278,23 @@ test_that(".sbm_projection works reasonably well", {
   pop_mat <- cluster_mat %*% b_mat_truth %*% t(cluster_mat)
   
   expect_true(sum(abs(res - pop_mat)) <= sum(abs(res2 - pop_mat)))
+})
+
+test_that(".sbm_projection works for dat_org", {
+  set.seed(10)
+  b_mat_truth <- 0.5*diag(3)
+  b_mat_truth <- b_mat_truth + 0.2
+  cluster_idx_truth <- rep(1:3, each = 50)
+  dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
+  test_prop <- 0.1
+  dat_NA <- .remove_entries(dat, test_prop)
+  dat_impute <- .impute_matrix(dat_NA, ncol(b_mat_truth), test_prop)
+  
+  res <- .sbm_projection(dat_impute, ncol(b_mat_truth), dat_NA)
+  res2 <- .sbm_projection(dat_impute, ncol(b_mat_truth))
+  
+  expect_true(all(dim(res) == dim(dat)))
+  expect_true(sum(abs(res - res2)) >= 1e-6)
 })
 
 ######################
