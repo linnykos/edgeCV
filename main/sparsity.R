@@ -3,10 +3,10 @@ library(simulation)
 library(networkCV)
 
 set.seed(10)
-trials <- 50
-paramMat <- as.matrix(expand.grid(c(30, 100, 300), c(0, 0.25, 0.5),
-                                  5, 200, 0.05, 5))
-colnames(paramMat) <- c("n", "rho", "K", "trials", "alpha", "nfold")
+trials <- 100
+paramMat <- as.matrix(expand.grid(c(100), c(seq(0, 0.5, length.out = 11), -1),
+                                  5, 200, 5))
+colnames(paramMat) <- c("n", "rho", "K", "trials", "nfold")
 
 #############
 
@@ -30,23 +30,20 @@ criterion <- function(dat, vec, y){
   ecv_res <- networkCV::edge_cv_sbm(dat, k_vec = c(1:vec["K"]), nfold = vec["nfold"], verbose = F)
   err_mat_list <- ecv_res$err_mat_list
   
-  cvc_res <- networkCV::cvc_sbm(err_mat_list, vec["trials"], vec["alpha"], verbose = T, ncores = 20)
+  cvc_res <- networkCV::cvc(do.call(rbind, err_mat_list), vec["trials"])
   
-  print(ecv_res$err_vec)
-  print(cvc_res$p_vec)
-  
-  list(err_vec = ecv_res$err_vec, p_vec = cvc_res$p_vec)
+  list(err_vec = ecv_res$err_vec, p_vec = cvc_res)
 }
 
-  # idx <- 1; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
-# idx <- 4; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
+# idx <- 1; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
+# idx <- 5; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
 
 
 ###########################
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = trials,
-                                        cores = NA, as_list = T,
+                                        cores = 20, as_list = T,
                                         filepath = "sparsity_3_tmp.RData",
                                         verbose = T)
 save.image("sparsity_3.RData")
