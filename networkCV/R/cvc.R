@@ -1,4 +1,13 @@
-cvc <- function(err_mat, B = 200, alpha = 0.05) {
+#' CVC 
+#'
+#' @param err_mat matrix of \code{n} rows and \code{K} models, each entry containing the loss of a particular entry
+#' @param B number of bootstrap trials 
+#' @param verbose boolean
+#'
+#' @return vector of p-values, where larger p-values denote more evidence to support the null hypothesis
+#' of the specific model is the best candidate
+#' @export
+cvc <- function(err_mat, B = 200, verbose = F) {
   clean_res <- .clean_err_mat(err_mat)
   
   err_mat_c <- clean_res$err_mat_c
@@ -12,18 +21,22 @@ cvc <- function(err_mat, B = 200, alpha = 0.05) {
   gauss_mat <- matrix(stats::rnorm(n*B), ncol = B)
   
   sgmb_p_val <- sapply(1:M, function(m){
+    if(verbose) print(paste0("On model ", m))
+    
     err_diff_center <- err_mat_center[,m] - err_mat_center[,-m, drop=F]
     err_mean_diff <- err_mean[m] - err_mean[-m]
     
-    sd_vec <- apply(err_diff_center, 2, sd)
+    sd_vec <- apply(err_diff_center, 2, stats::sd)
     err_mean_diff_scale <- sqrt(n) * err_mean_diff / sd_vec
     
     err_diff_center_scale <- err_diff_center / 
       matrix(sd_vec, nrow = n, ncol = ncol(err_diff_center), byrow = T)
     
     # compute the bootstrap statistic
-    test_stat_vec <- sapply(1:B, function(ib){
-      sqrt(n) * max(apply(err_diff_center_scale*gauss_mat[,ib], 2, mean))
+    test_stat_vec <- sapply(1:B, function(i){
+      if(verbose & i %% floor(B/10) == 0) cat('*')
+      
+      sqrt(n) * max(apply(err_diff_center_scale*gauss_mat[,i], 2, mean))
     })
     
     mean(test_stat_vec > max(err_mean_diff_scale))
@@ -56,7 +69,7 @@ cvc <- function(err_mat, B = 200, alpha = 0.05) {
     m <- remaining_index[1]
     err_diff_center <- err_mat_center[,m] - err_mat_center
     err_mean_diff <- err_mean[m] - err_mean
-    sd_vec <- apply(err_diff_center, 2, sd)
+    sd_vec <- apply(err_diff_center, 2, stats::sd)
     J_1 <- which(sd_vec==0 & err_mean_diff > 0)
     J_2 <- which(sd_vec==0 & err_mean_diff == 0)
     J_3 <- which(sd_vec==0 & err_mean_diff < 0)

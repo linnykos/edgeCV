@@ -1,7 +1,7 @@
 set.seed(10)
 beta <- 0.25
 b_mat_truth <- (1-1.5*beta)*diag(3) + beta*rep(1,3) %*% t(rep(1,3))
-cluster_idx_truth <- rep(1:3, each = 10)
+cluster_idx_truth <- rep(1:3, each = 60)
 dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
 k <- 5
 ecv_res <- edge_cv_sbm_sample_split(dat, k_vec = c(1:k), test_prop = 0.1)
