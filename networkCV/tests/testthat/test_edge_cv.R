@@ -221,6 +221,22 @@ test_that(".form_prediction_sbm works with NA", {
   expect_true(all(dim(res) == dim(b_mat)))
 })
 
+test_that(".form_prediction_sbm works with entire matrix is NA", {
+  set.seed(10)
+  b_mat <- 0.5*diag(3)
+  b_mat <- b_mat + 0.2
+  cluster_idx_truth <- rep(1:3, each = 50)
+  dat <- generate_sbm(b_mat, cluster_idx_truth)
+  test_prop <- 0.1
+  dat_NA <- .remove_entries(dat, test_prop)
+  dat_impute <- .impute_matrix(dat_NA, ncol(b_mat), test_prop)
+  cluster_idx <- .spectral_clustering(dat_impute, ncol(b_mat))
+  
+  res <- .form_prediction_sbm(matrix(NA, ncol = ncol(dat_NA), nrow = nrow(dat_NA)), cluster_idx)
+  
+  expect_true(all(dim(res) == dim(b_mat)))
+})
+
 ################
 
 ## .sbm_projection is correct
@@ -292,6 +308,24 @@ test_that(".sbm_projection works for dat_org", {
   
   res <- .sbm_projection(dat_impute, ncol(b_mat_truth), dat_NA)
   res2 <- .sbm_projection(dat_impute, ncol(b_mat_truth))
+  
+  expect_true(all(dim(res) == dim(dat)))
+  expect_true(sum(abs(res - res2)) >= 1e-6)
+})
+
+test_that(".sbm_projection works for dat_org = NA", {
+  set.seed(10)
+  b_mat_truth <- 0.5*diag(3)
+  b_mat_truth <- b_mat_truth + 0.2
+  cluster_idx_truth <- rep(1:3, each = 50)
+  dat <- generate_sbm(b_mat_truth, cluster_idx_truth)
+  test_prop <- 0.1
+  dat_NA <- .remove_entries(dat, test_prop)
+  dat_impute <- .impute_matrix(dat_NA, ncol(b_mat_truth), test_prop)
+  
+  tmp <- matrix(NA, ncol = ncol(dat_impute), nrow = nrow(dat_impute))
+  tmp[1,1] <- 0
+  res <- .sbm_projection(dat_impute, ncol(b_mat_truth), dat_org = tmp)
   
   expect_true(all(dim(res) == dim(dat)))
   expect_true(sum(abs(res - res2)) >= 1e-6)
