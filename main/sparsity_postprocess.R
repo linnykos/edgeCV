@@ -22,19 +22,19 @@ mat_list <- lapply(1:nrow(paramMat), function(i){
     
     # next do cvc
     idx <- which(tmp_res2[[x]]$p_vec >= alpha)
-    # if(length(idx) == 0) {
-    #   tmp_vec[4] <- tmp_vec[4]+1
-    # } else if(3 %in% idx) {tmp_vec[5] <- tmp_vec[5]+1
-    # } else if(all(idx < 3)){tmp_vec[4] <- tmp_vec[4]+1
-    # } else if(all(idx > 3)){tmp_vec[6] <- tmp_vec[6]+1
-    # } else tmp_vec[4] <- tmp_vec[4]+1 #what to do when results are logically incoherent
-    idx <- idx[which.min(idx)]
     if(length(idx) == 0) {
-      tmp_vec[7] <- tmp_vec[7]+1
-    } else if(idx == 3) {tmp_vec[5] <- tmp_vec[5]+1
+      tmp_vec[4] <- tmp_vec[4]+1
+    } else if(3 %in% idx) {tmp_vec[5] <- tmp_vec[5]+1
     } else if(all(idx < 3)){tmp_vec[4] <- tmp_vec[4]+1
     } else if(all(idx > 3)){tmp_vec[6] <- tmp_vec[6]+1
-    }
+    } else tmp_vec[4] <- tmp_vec[4]+1 #what to do when results are logically incoherent
+    # idx <- idx[which.min(idx)]
+    # if(length(idx) == 0) {
+    #   tmp_vec[7] <- tmp_vec[7]+1
+    # } else if(idx == 3) {tmp_vec[5] <- tmp_vec[5]+1
+    # } else if(all(idx < 3)){tmp_vec[4] <- tmp_vec[4]+1
+    # } else if(all(idx > 3)){tmp_vec[6] <- tmp_vec[6]+1
+    # }
   }
   
   tmp_vec
