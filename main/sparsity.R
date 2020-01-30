@@ -3,8 +3,8 @@ library(simulation)
 library(networkCV)
 
 set.seed(10)
-trials <- 50
-paramMat <- as.matrix(expand.grid(c(600), c(seq(0, 0.5, length.out = 11)),
+trials <- 100
+paramMat <- as.matrix(expand.grid(c(100), c(seq(0, 0.5, length.out = 11)),
                                   c(3:5),
                                   6 , 200, 5))
 colnames(paramMat) <- c("n", "rho", "K", "num_model", "trials", "nfold")
@@ -46,6 +46,6 @@ criterion <- function(dat, vec, y){
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = trials,
                                         cores = 20, as_list = T,
-                                        filepath = "../results/sparsity_4b_tmp.RData",
+                                        filepath = "../results/sparsity_5_tmp.RData",
                                         verbose = T)
-save.image("../results/sparsity_4.RData")
+save.image("../results/sparsity_5.RData")

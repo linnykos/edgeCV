@@ -2,11 +2,11 @@ rm(list=ls())
 load("../results/sparsity_4.RData")
 alpha <- 0.05
 
-k_level <- 3
+k_vec <- as.character(3:5)
 spar_level <- 11
 
 # for each sparsity level, compute the amount overselected, exactly selected, and underselected for each n
-mat_list <- lapply(1:k_level, function(i){
+mat_list <- lapply(1:length(k_vec), function(i){
   tmp_res <- res[((i-1)*spar_level+1):(i*spar_level)]
   
   
@@ -21,25 +21,25 @@ mat_list <- lapply(1:k_level, function(i){
     for(x in 1:trials_mod){
       # first do ecv
       idx <- which.min(tmp_res2[[x]]$err_vec)
-      if(idx < 3) {tmp_vec[1] <- tmp_vec[1]+1
-      } else if(idx > 3) {tmp_vec[3] <- tmp_vec[3]+1
+      if(idx < k_vec[i]) {tmp_vec[1] <- tmp_vec[1]+1
+      } else if(idx > k_vec[i]) {tmp_vec[3] <- tmp_vec[3]+1
       } else {tmp_vec[2] <- tmp_vec[2] + 1}
       
       # next do cvc
       idx <- which(tmp_res2[[x]]$p_vec >= alpha)
       if(length(idx) == 0) {
         tmp_vec[7] <- tmp_vec[7]+1
-      } else if(3 %in% idx) {tmp_vec[5] <- tmp_vec[5]+1
-      } else if(all(idx < 3)){tmp_vec[4] <- tmp_vec[4]+1
-      } else if(all(idx > 3)){tmp_vec[6] <- tmp_vec[6]+1
+      } else if(k_vec[i] %in% idx) {tmp_vec[5] <- tmp_vec[5]+1
+      } else if(all(idx < k_vec[i])){tmp_vec[4] <- tmp_vec[4]+1
+      } else if(all(idx > k_vec[i])){tmp_vec[6] <- tmp_vec[6]+1
       } else tmp_vec[7] <- tmp_vec[7] + 1 #what to do when results are logically incoherent
       
       idx <- idx[which.min(idx)]
       if(length(idx) == 0) {
         tmp_vec[12] <- tmp_vec[12]+1
-      } else if(idx == 3) {tmp_vec[10] <- tmp_vec[10]+1
-      } else if(all(idx < 3)){tmp_vec[9] <- tmp_vec[9]+1
-      } else if(all(idx > 3)){tmp_vec[11] <- tmp_vec[11]+1
+      } else if(idx ==  k_vec[i]) {tmp_vec[10] <- tmp_vec[10]+1
+      } else if(all(idx <  k_vec[i])){tmp_vec[9] <- tmp_vec[9]+1
+      } else if(all(idx >  k_vec[i])){tmp_vec[11] <- tmp_vec[11]+1
       }
     }
     
@@ -57,8 +57,7 @@ col_vec <- c(rgb(165, 217, 151, maxColorValue = 255), #green
 
 # plot the bars (from top to bottom: none, underest, exact ext, overest)
 main_vec <- c("1", paste0("1/n^", paramMat[2:11,2]))
-k_vec <- as.character(3:5)
-for(k in 1:k_level){
+for(k in 1:length(k_vec)){
   png(paste0("../figures/sparsity_4_", k, ".png"), height = 1500, width = 4500, res = 300, units = "px")
   par(mfrow = c(1,3), mar = c(4,4,4,1))
   
@@ -99,7 +98,7 @@ for(k in 1:k_level){
 success_idx <- c(2,5,10)
 png(paste0("../figures/sparsity_byn.png"), height = 1500, width = 4500, res = 300, units = "px")
 par(mfrow = c(1,3), mar = c(4,4,4,1))
-for(k in 1:k_level){
+for(k in 1:length(k_vec)){
   plot(NA, xlim = range(paramMat[1:11,2]), ylim = c(0, 1), xlab = "Sparsity level: (1/n^x)", ylab = "Percentage success",
        main = paste0("SBM with ", k_vec[k], " clusters"))
   for(i in 1:3){
