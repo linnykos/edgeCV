@@ -1,5 +1,6 @@
 rm(list=ls())
 source("../experiment/ncv_source.R")
+library(simulation)
 library(networkCV)
 
 
