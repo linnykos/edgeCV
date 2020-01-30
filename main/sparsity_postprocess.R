@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../results/sparsity_5.RData")
+load("../results/sparsity_5b.RData")
 alpha <- 0.05
 
 k_vec <- as.character(3:5)
@@ -78,7 +78,7 @@ for(k in 1:length(k_vec)){
   rownames(tmp) <- c("Over","Exact","Under","None")
   colnames(tmp) <- main_vec
   graphics::barplot(as.table(tmp), horiz = TRUE, col = col_vec[c(2,1,3,4)], 
-                    main = paste0("SBM-setting, ECV+CVC\n", k_vec[k], " clusters"),
+                    main = paste0("SBM-setting, ECV+CVC\n", k_vec[k], " clusters (Lenient)"),
                     cex.names = 0.7)
   
   # reformat and plot cvc
@@ -88,7 +88,7 @@ for(k in 1:length(k_vec)){
   rownames(tmp) <- c("Over","Exact","Under","None")
   colnames(tmp) <- main_vec
   graphics::barplot(as.table(tmp), horiz = TRUE, col = col_vec[c(2,1,3,4)], 
-                    main = paste0("SBM-setting, ECV+CVC\n", k_vec[k], " clusters"),
+                    main = paste0("SBM-setting, ECV+CVC\n", k_vec[k], " clusters (Stringent)"),
                     cex.names = 0.7)
   graphics.off()
 }
@@ -96,7 +96,7 @@ for(k in 1:length(k_vec)){
 ########
 
 success_idx <- c(2,5,10)
-png(paste0("../figures/sparsity_byn.png"), height = 1500, width = 4500, res = 300, units = "px")
+png(paste0("../figures/sparsity_byn.png"), height = 1000, width = 3000, res = 300, units = "px")
 par(mfrow = c(1,3), mar = c(4,4,4,1))
 for(k in 1:length(k_vec)){
   plot(NA, xlim = range(paramMat[1:11,2]), ylim = c(0, 1), xlab = "Sparsity level: (1/n^x)", ylab = "Percentage success",
@@ -105,5 +105,8 @@ for(k in 1:length(k_vec)){
     lines(x = paramMat[1:11,2], y = mat_list[[k]][success_idx[i],]/trials, col = i, lwd = 2)
     points(x = paramMat[1:11,2], y = mat_list[[k]][success_idx[i],]/trials, col = i, pch = 16, cex = 2)
   }
+  
+  legend("topright", c("Success for ECV", "Lenient success for CVC", "Stringent success for CVC"), 
+         bty="n", fill = c(1:3))
 }
 graphics.off()
