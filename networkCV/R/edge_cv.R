@@ -38,7 +38,7 @@ edge_cv_sbm <- function(dat, k_vec, nfolds = 5, tol = 1e-6, verbose = T){
     # impute and compute errors
     for(i in k_vec){
       dat_impute <- .impute_matrix(dat_NA, k_vec[i], 1/nfolds)
-      dat_impute <- .sbm_projection(dat_impute, k_vec[i], dat_org = NA)
+      dat_impute <- .sbm_projection(dat_impute, k_vec[i], dat_org = dat_NA)
       err_mat[,i] <- (dat_impute[test_idx] - dat[test_idx])^2
     }
     

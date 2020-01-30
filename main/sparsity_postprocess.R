@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../results/sparsity_4.RData")
+load("../results/sparsity_5.RData")
 alpha <- 0.05
 
 k_vec <- as.character(3:5)
@@ -58,7 +58,7 @@ col_vec <- c(rgb(165, 217, 151, maxColorValue = 255), #green
 # plot the bars (from top to bottom: none, underest, exact ext, overest)
 main_vec <- c("1", paste0("1/n^", paramMat[2:11,2]))
 for(k in 1:length(k_vec)){
-  png(paste0("../figures/sparsity_4_", k, ".png"), height = 1500, width = 4500, res = 300, units = "px")
+  png(paste0("../figures/sparsity_5_", k, ".png"), height = 1500, width = 4500, res = 300, units = "px")
   par(mfrow = c(1,3), mar = c(4,4,4,1))
   
   # reformat and plot ecv
@@ -106,3 +106,4 @@ for(k in 1:length(k_vec)){
     points(x = paramMat[1:11,2], y = mat_list[[k]][success_idx[i],]/trials, col = i, pch = 16, cex = 2)
   }
 }
+graphics.off()
