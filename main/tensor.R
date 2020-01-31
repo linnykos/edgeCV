@@ -3,8 +3,8 @@ library(simulation)
 library(networkCV)
 
 set.seed(10)
-trials <- 20
-paramMat <- as.matrix(expand.grid(100, 10, c(seq(0, 0.5, length.out = 6)),
+trials <- 100
+paramMat <- as.matrix(expand.grid(100, 10, c(seq(0.3, 0.5, length.out = 5)),
                                   c(3:5), 6 ,200, 5))
 colnames(paramMat) <- c("n", "p", "rho", "K", "num_model", "trials", "nfold")
 
@@ -49,7 +49,7 @@ criterion <- function(dat, vec, y){
 
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = trials,
-                                        cores = 20, as_list = T,
+                                        cores = 25, as_list = T,
                                         filepath = "../results/tensor_tmp.RData",
                                         verbose = T)
 save.image("../results/tensor.RData")

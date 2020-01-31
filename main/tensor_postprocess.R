@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../results/sparsity_5.RData")
+load("../results/tensor.RData")
 alpha <- 0.05
 
 k_vec <- as.character(3:5)
@@ -8,7 +8,6 @@ spar_level <- 6
 # for each sparsity level, compute the amount overselected, exactly selected, and underselected for each n
 mat_list <- lapply(1:length(k_vec), function(i){
   tmp_res <- res[((i-1)*spar_level+1):(i*spar_level)]
-  
   
   vec <- sapply(1:length(tmp_res), function(n){
     # clean results
@@ -54,3 +53,43 @@ col_vec <- c(rgb(165, 217, 151, maxColorValue = 255), #green
              rgb(239, 133, 140, maxColorValue = 255), #red
              rgb(73, 73, 73, maxColorValue = 255) #gray
 )
+
+##################
+
+# plot the bars (from top to bottom: none, underest, exact ext, overest)
+main_vec <- c("1", paste0("1/n^", paramMat[2:6,3]))
+for(k in 1:length(k_vec)){
+  png(paste0("../figures/tensor", k, ".png"), height = 1500, width = 4500, res = 300, units = "px")
+  par(mfrow = c(1,3), mar = c(4,4,4,1))
+  
+  # reformat and plot ecv
+  tmp <- mat_list[[k]][1:3,]
+  tmp <- apply(tmp,2,function(x){x/sum(x)*trials})
+  tmp <- tmp[c(3,2,1), ]
+  rownames(tmp) <- c("Over","Exact","Under")
+  colnames(tmp) <- main_vec
+  graphics::barplot(as.table(tmp), horiz = TRUE, col = col_vec[c(2,1,3)], 
+                    main = paste0("SBM-setting, ECV\n", k_vec[k], " clusters"),
+                    cex.names = 0.7)
+  
+  # reformat and plot cvc
+  tmp <- mat_list[[k]][4:8,]
+  tmp <- apply(tmp,2,function(x){x/sum(x)*trials})
+  tmp <- tmp[c(3,2,1,4), ]
+  rownames(tmp) <- c("Over","Exact","Under","None")
+  colnames(tmp) <- main_vec
+  graphics::barplot(as.table(tmp), horiz = TRUE, col = col_vec[c(2,1,3,4)], 
+                    main = paste0("SBM-setting, ECV+CVC\n", k_vec[k], " clusters (Lenient)"),
+                    cex.names = 0.7)
+  
+  # reformat and plot cvc
+  tmp <- mat_list[[k]][9:12,]
+  tmp <- apply(tmp,2,function(x){x/sum(x)*trials})
+  tmp <- tmp[c(3,2,1,4), ]
+  rownames(tmp) <- c("Over","Exact","Under","None")
+  colnames(tmp) <- main_vec
+  graphics::barplot(as.table(tmp), horiz = TRUE, col = col_vec[c(2,1,3,4)], 
+                    main = paste0("SBM-setting, ECV+CVC\n", k_vec[k], " clusters (Stringent)"),
+                    cex.names = 0.7)
+  graphics.off()
+}
