@@ -1,4 +1,4 @@
-rm(list=ls())
+rm(list = ls())
 set.seed(20)
 b_mat <- 0.5*diag(3)
 b_mat <- b_mat + 0.2
@@ -8,10 +8,9 @@ for(i in 1:dim(b_tensor)[1]){
   b_tensor[i,,] <- b_mat
 }
 
-cluster_idx <- rep(1:3, each = 50)
+cluster_idx <- rep(1:3, each = 20)
 
 dat <- generate_tensor(b_tensor, cluster_idx, 1)
-
 # res <- edge_cv_sbm_tensor(dat, 1:5, verbose = F)
 
 k_vec = 1:5
@@ -37,3 +36,5 @@ fold_list <- lapply(1:p, function(j){
   
   fold_id
 })
+
+

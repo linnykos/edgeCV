@@ -3,10 +3,10 @@ library(simulation)
 library(networkCV)
 
 set.seed(10)
-trials <- 50
-paramMat <- as.matrix(expand.grid(c(10, 30, 100, 200), c(0, 0.25, 0.5),
-                                  5, 200, 0.05, 5))
-colnames(paramMat) <- c("n", "rho", "K", "trials", "alpha", "nfold")
+trials <- 20
+paramMat <- as.matrix(expand.grid(100, 10, c(seq(0, 0.5, length.out = 6)),
+                                  5, 200, 5))
+colnames(paramMat) <- c("n", "p", "rho", "K", "trials", "nfold")
 
 #############
 
@@ -21,7 +21,7 @@ rule <- function(vec){
     rho <- log(n)/n
   }
   
-  b_tensor <- array(NA, c(vec["n"], 3, 3))
+  b_tensor <- array(NA, c(vec["p"], 3, 3))
   for(i in 1:dim(b_tensor)[1]){
     b_tensor[i,,] <- b_mat
   }
@@ -32,9 +32,12 @@ rule <- function(vec){
 }
 
 criterion <- function(dat, vec, y){
-  ecv_res <- networkCV::edge_cv_sbm_tensor(dat, k_vec = c(1:vec["K"]), trials = 5, test_prop = 0.1, verbose = F)
+  ecv_res <- networkCV::edge_cv_sbm_tensor(dat, k_vec = c(1:vec["K"]), nfolds = vec["nfold"], verbose = F)
+  err_mat_list <- ecv_res$err_mat_list
   
-  list(err_vec = ecv_res$err_vec)
+  ecv_cvc_res <- networkCV::cvc(do.call(rbind, err_mat_list), vec["trials"])
+  
+  list(ecv_err_vec = ecv_res$err_vec, ecv_p_vec = ecv_cvc_res)
 }
 
 # idx <- 1; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)

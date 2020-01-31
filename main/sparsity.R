@@ -1,7 +1,6 @@
 rm(list=ls())
 library(simulation)
 library(networkCV)
-source("../experiment/ncv_source.R")
 
 set.seed(10)
 trials <- 100
@@ -35,15 +34,7 @@ criterion <- function(dat, vec, y){
   
   ecv_cvc_res <- networkCV::cvc(do.call(rbind, err_mat_list), vec["trials"])
   
-  ###
-  
-  ncv_res <- NCV(dat, K.vec = c(1:vec["num_model"]), n.fold = vec["nfold"])
-  err_mat<- ncv_res$err_mat
-  
-  ncv_cvc_res <- networkCV::cvc(err_mat, vec["trials"])
-  
-  list(ecv_err_vec = ecv_res$err_vec, ecv_p_vec = ecv_cvc_res,
-       ncv_err_vec = ncv_res$err_vec, ncv_p_vec = ncv_cvc_res)
+  list(ecv_err_vec = ecv_res$err_vec, ecv_p_vec = ecv_cvc_res)
 }
 
 # idx <- 1; y <- 1; set.seed(y); criterion(rule(paramMat[idx,]), paramMat[idx,], y)
