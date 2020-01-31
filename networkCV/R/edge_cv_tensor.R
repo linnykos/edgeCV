@@ -9,17 +9,38 @@
 #'
 #' @return list
 #' @export
-edge_cv_sbm_tensor <- function(dat, k_vec, trials = 5, test_prop = 0.1, tol = 1e-6, verbose = T){
+edge_cv_sbm_tensor <- function(dat, k_vec, nfolds = 5, tol = 1e-6, verbose = T){
   p <- dim(dat)[1]
   n <- dim(dat)[2]
   
-  err_mat_list <- lapply(1:trials, function(trial){
-    if(verbose) print(paste0("On trial ", trial))
+  # assign each node triplet to a fold, stratified by first dimension
+  combn_mat <- utils::combn(n, 2)
+  idx_mat <- apply(combn_mat, 2, function(vec){
+    c(.convert_pair_to_idx(vec, n), .convert_pair_to_idx(rev(vec), n))
+  })
+  
+  fold_list <- lapply(1:p, function(j){
+    fold_id <- rep(NA, ncol(idx_mat))
+    for(i in 1:(nfolds-1)){
+      fold_id[sample(which(is.na(fold_id)), round(ncol(idx_mat)/nfolds))] <- i
+    }
+    fold_id[which(is.na(fold_id))] <- nfolds
     
-    test_idx <- .generate_tensor_indices(p, n, round(test_prop*p*n*(n+1)/2))
+    fold_id
+  })
+  
+  err_mat_list <- lapply(1:nfolds, function(fold){
+    if(verbose) print(paste0("On fold ", fold))
     
     dat_NA <- dat
-    dat_NA[test_idx] <- NA
+    for(i in 1:p){
+      tmp_mat <- dat_NA[i,,]
+      test_idx <- as.numeric(idx_mat[,which(fold_list[[i]] == fold)])
+      tmp_mat[test_idx] <- NA
+      dat_NA[i,,] <- tmp_mat
+    }
+    
+    test_idx <- which(is.na(dat_NA))
     
     # generate the error matrix
     err_mat <- matrix(NA, nrow = length(test_idx), ncol = length(k_vec))
@@ -27,7 +48,7 @@ edge_cv_sbm_tensor <- function(dat, k_vec, trials = 5, test_prop = 0.1, tol = 1e
     
     # impute and compute errors
     for(i in k_vec){
-      dat_impute <- .impute_tensor(dat_NA, k_vec[i], test_prop)
+      dat_impute <- .impute_tensor(dat_NA, k_vec[i], 1/nfolds)
       err_mat[,i] <- (dat_impute[test_idx] - dat[test_idx])^2
     }
     

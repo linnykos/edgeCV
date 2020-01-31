@@ -116,7 +116,7 @@ test_that("edge_cv_sbm_tensor works", {
     b_tensor[i,,] <- b_mat
   }
   
-  cluster_idx <- rep(1:3, each = 50)
+  cluster_idx <- rep(1:3, each = 20)
   
   dat <- generate_tensor(b_tensor, cluster_idx, 1)
   
@@ -124,4 +124,5 @@ test_that("edge_cv_sbm_tensor works", {
   
   expect_true(is.list(res))
   expect_true(length(res) == 3)
+  expect_true(length(unlist(res$err_mat_list)) == prod(dim(dat))*5 - dim(dat)[1]*dim(dat)[2]*5)
 })
