@@ -3,7 +3,7 @@ load("../results/tensor.RData")
 alpha <- 0.05
 
 k_vec <- as.character(3:5)
-spar_level <- 6
+spar_level <- 5
 
 # for each sparsity level, compute the amount overselected, exactly selected, and underselected for each n
 mat_list <- lapply(1:length(k_vec), function(i){
@@ -57,7 +57,7 @@ col_vec <- c(rgb(165, 217, 151, maxColorValue = 255), #green
 ##################
 
 # plot the bars (from top to bottom: none, underest, exact ext, overest)
-main_vec <- c("1", paste0("1/n^", paramMat[2:6,3]))
+main_vec <- c(paste0("1/n^", paramMat[1:5,3]))
 for(k in 1:length(k_vec)){
   png(paste0("../figures/tensor", k, ".png"), height = 1500, width = 4500, res = 300, units = "px")
   par(mfrow = c(1,3), mar = c(4,4,4,1))

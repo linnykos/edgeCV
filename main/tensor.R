@@ -3,7 +3,7 @@ library(simulation)
 library(networkCV)
 
 set.seed(10)
-trials <- 100
+trials <- 150
 paramMat <- as.matrix(expand.grid(100, 10, c(seq(0.3, 0.5, length.out = 5)),
                                   c(3:5), 6 ,200, 5))
 colnames(paramMat) <- c("n", "p", "rho", "K", "num_model", "trials", "nfold")
