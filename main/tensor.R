@@ -5,23 +5,24 @@ library(networkCV)
 set.seed(10)
 trials <- 20
 paramMat <- as.matrix(expand.grid(100, 10, c(seq(0, 0.5, length.out = 6)),
-                                  5, 200, 5))
-colnames(paramMat) <- c("n", "p", "rho", "K", "trials", "nfold")
+                                  c(3:5), 6 ,200, 5))
+colnames(paramMat) <- c("n", "p", "rho", "K", "num_model", "trials", "nfold")
 
 #############
 
 rule <- function(vec){
-  b_mat <- matrix(0.2, 3, 3) + 0.6*diag(3)
+  b_mat <- matrix(0.2, vec["K"], vec["K"]) + 0.6*diag(vec["K"])
   n <- vec["n"]
-  n3 <- round(n/3)
-  cluster_idx <- c(rep(1, n3), rep(2, n3), rep(3, vec["n"]-2*n3))
+  n_each <- round(n/vec["K"])
+  cluster_idx <- rep(1:(vec["K"]-1), each = n_each)
+  cluster_idx <- c(cluster_idx, rep(vec["K"], n - length(cluster_idx)))
   if(vec["rho"] >= 0){
     rho <- 1/(n^vec["rho"])
   } else {
     rho <- log(n)/n
   }
   
-  b_tensor <- array(NA, c(vec["p"], 3, 3))
+  b_tensor <- array(NA, c(vec["p"], vec["K"], vec["K"]))
   for(i in 1:dim(b_tensor)[1]){
     b_tensor[i,,] <- b_mat
   }
@@ -32,7 +33,7 @@ rule <- function(vec){
 }
 
 criterion <- function(dat, vec, y){
-  ecv_res <- networkCV::edge_cv_sbm_tensor(dat, k_vec = c(1:vec["K"]), nfolds = vec["nfold"], verbose = F)
+  ecv_res <- networkCV::edge_cv_sbm_tensor(dat, k_vec = c(1:vec["num_model"]), nfolds = vec["nfold"], verbose = F)
   err_mat_list <- ecv_res$err_mat_list
   
   ecv_cvc_res <- networkCV::cvc(do.call(rbind, err_mat_list), vec["trials"])
@@ -49,6 +50,6 @@ criterion <- function(dat, vec, y){
 res <- simulation::simulation_generator(rule = rule, criterion = criterion,
                                         paramMat = paramMat, trials = trials,
                                         cores = 20, as_list = T,
-                                        filepath = "tensor_tmp.RData",
+                                        filepath = "../results/tensor_tmp.RData",
                                         verbose = T)
-save.image("tensor.RData")
+save.image("../results/tensor.RData")
