@@ -15,6 +15,11 @@ mat_list <- lapply(1:length(k_vec), function(i){
     tmp_res2 <- tmp_res[[n]][!b]
     trials_mod <- length(tmp_res2)
     
+    if(trials_mod > 100){
+      tmp_res2 <- tmp_res2[1:100]
+      trials_mod <- 100
+    }
+    
     # loop over all the trials
     tmp_vec <- rep(0, 12)
     for(x in 1:trials_mod){
